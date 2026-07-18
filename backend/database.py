@@ -19,3 +19,10 @@ SessionLocal = sessionmaker(bind=engine)
 #that how SQL alchemy knows "this python class is a database table"
 class Base(DeclarativeBase):
     pass
+
+def get_db():
+    db = SessionLocal() #open a session
+    try:
+        yield db #hand it to whoever ask it 
+    finally:
+        db.close() #always close it when done, even if it crashes

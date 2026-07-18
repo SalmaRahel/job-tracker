@@ -1,6 +1,6 @@
 from database import Base
 
-from sqlalchemy import String, Text, Date, Enum
+from sqlalchemy import String, Text, Date, Enum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 from typing import Optional
 from datetime import date
@@ -30,3 +30,11 @@ class Internship(Base):
     job_link: Mapped[Optional[str]] = mapped_column(String(250), nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(Text(), nullable=True)
     status: Mapped[ApplicationStatus] = mapped_column(Enum(ApplicationStatus))
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    hashed_password: Mapped[str] = mapped_column(Text(), nullable=False)

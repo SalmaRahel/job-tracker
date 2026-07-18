@@ -1,7 +1,8 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import date
 from models import ApplicationStatus
+
 
 #a schema its the rules for what's allowed to cross the border, in one specific direction 
 
@@ -45,3 +46,18 @@ class InternshipUpdate(BaseModel):
     job_link: Optional[str] = None
     notes: Optional[str] = None
     status: Optional[ApplicationStatus] = None
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str
+
+class UserResponse(BaseModel):
+    id: int
+    email: EmailStr
+
+    class Config:
+        from_attributes = True
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
