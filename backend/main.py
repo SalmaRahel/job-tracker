@@ -1,17 +1,23 @@
-from fastapi import FastAPI, Depends, HTTPException, Response # The main FastAPI class — creates the app object
-from models import ApplicationStatus, Internship   # ORM model (Internship) + enum (ApplicationStatus)
-from database import SessionLocal                  # Session factory — call SessionLocal() to get a DB session
-from schemas import InternshipCreate, InternshipResponse, InternshipUpdate      
+from fastapi import FastAPI, Depends, HTTPException, Response, status # The main FastAPI class — creates the app object
+from models import ApplicationStatus, Internship, User   # ORM model (Internship) + enum (ApplicationStatus)
+from database import get_db                  # Session factory — call SessionLocal() to get a DB session
+from dependencies import get_current_user
+from schemas import InternshipCreate, InternshipResponse, InternshipUpdate,  UserCreate, UserResponse, UserLogin     
 from sqlalchemy.orm import Session
+from security import hash_password, verify_password 
+from datetime import datetime, timedelta, timezone
+from dotenv import load_dotenv
+import os
+from jose import jwt
+import logging
+
+load_dotenv()
 
 app = FastAPI()
 
-def get_db():
-    db = SessionLocal() #open a session
-    try:
-        yield db #hand it to whoever ask it 
-    finally:
-        db.close() #always close it when done, even if it crashes
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 @app.get("/health")
 def health_check():
@@ -19,7 +25,7 @@ def health_check():
 
 #Depends: means run this function inside fisrt , and use whetever it return 
 @app.post("/internships")
-def create_internships(inter: InternshipCreate, db: Session=Depends(get_db)): 
+def create_internships(inter: InternshipCreate, db: Session=Depends(get_db), user: User=Depends(get_current_user)): 
     new_internship = Internship(
         company_name     = inter.company_name,
         position         = inter.position,
@@ -28,7 +34,8 @@ def create_internships(inter: InternshipCreate, db: Session=Depends(get_db)):
         deadline         = inter.deadline,
         job_link         = inter.job_link,
         notes            = inter.notes,
-        status           = ApplicationStatus.SAVED    # Always start as SAVED
+        status           = ApplicationStatus.SAVED,
+        user_id          = user.id
     )
 
     db.add(new_internship)
@@ -36,30 +43,24 @@ def create_internships(inter: InternshipCreate, db: Session=Depends(get_db)):
     db.refresh(new_internship)
     return new_internship
 
+
 @app.get("/internships", response_model=list[InternshipResponse])
-def get_all_internship(db: Session=Depends(get_db)):
-    internships = db.query(Internship).all()
+def get_all_internship(db: Session=Depends(get_db), user: User=Depends(get_current_user)):
+    internships = db.query(Internship).filter(Internship.user_id == user.id).all()
     return internships
-
-#response_model is the instruction that tells FastAPI: "here's the Pydantic schema to use for that conversion on the way OUT." It does two jobs:
-
-#Filtering/shaping — it decides exactly which fields appear in the JSON response, in what shape. 
-# If your SQLAlchemy object had extra internal fields you didn't want exposed, 
-# response_model would strip them out — only fields declared in the schema get included.
-#Validation on the way out — it double-checks the data you're returning actually matches the schema's types before sending it as JSON.
 
 
 @app.get("/internships/{internship_id}", response_model=InternshipResponse)
-def get_id_internship(internship_id: int, db: Session = Depends(get_db)):
-    internship = db.query(Internship).filter(Internship.id == internship_id).first()
+def get_id_internship(internship_id: int, db: Session = Depends(get_db), user: User=Depends(get_current_user)):
+    internship = db.query(Internship).filter(Internship.id == internship_id, Internship.user_id == user.id).first()
     if internship is None:
         raise HTTPException(status_code = 404, detail = "Internship not found")
     return internship
 
 
 @app.put("/internships/{internship_id}", response_model=InternshipResponse)
-def update_internship(internship_id: int, updated_data: InternshipUpdate, db: Session = Depends(get_db)):
-    internship = db.query(Internship).filter(Internship.id == internship_id).first()
+def update_internship(internship_id: int, updated_data: InternshipUpdate, db: Session = Depends(get_db), user: User=Depends(get_current_user)):
+    internship = db.query(Internship).filter(Internship.id == internship_id, Internship.user_id == user.id).first()
     if internship is None:
         raise HTTPException(status_code = 404, detail = "Internship not found")
     updates = updated_data.model_dump(exclude_unset=True)
@@ -73,8 +74,8 @@ def update_internship(internship_id: int, updated_data: InternshipUpdate, db: Se
     return internship
 
 @app.delete("/internships/{internship_id}")
-def delete_internship(internship_id: int, db: Session = Depends(get_db)):
-    internship = db.query(Internship).filter(Internship.id == internship_id).first()
+def delete_internship(internship_id: int, db: Session = Depends(get_db), user: User=Depends(get_current_user)):
+    internship = db.query(Internship).filter(Internship.id == internship_id, Internship.user_id == user.id).first()
     if internship is None:
         raise HTTPException(status_code = 404, detail = "Internship not found")
     db.delete(internship)
@@ -82,3 +83,38 @@ def delete_internship(internship_id: int, db: Session = Depends(get_db)):
 
     return Response(status_code = 204)
 
+
+@app.post("/register", response_model=UserResponse)
+def create_user(user: UserCreate, db: Session=Depends(get_db)):
+    existing = db.query(User).filter(User.email == user.email).first() 
+    if existing is not None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="account already exist")
+    new_user = User(
+        email = user.email,
+        hashed_password = hash_password(user.password)   
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
+
+
+@app.post("/login")
+def login_user(user: UserLogin, db: Session=Depends(get_db)):
+    existing = db.query(User).filter(User.email == user.email).first()
+    if existing is None:
+        logger.warning(f"user not found for the email {user.email}")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid credentials")
+    
+    is_password_correct = verify_password(user.password, existing.hashed_password)
+    if is_password_correct is False:
+        logger.warning(f"wrong password for user id: [{existing.id}]")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="invalid credentials")
+    logger.info(f"user id[{existing.id}] logged in")
+    payload = { 
+        "sub": str(existing.id),
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")))
+    }
+
+    token = jwt.encode(payload, os.getenv("SECRET_KEY"), algorithm=os.getenv("ALGORITHM"))
+    return {"access_token": token, "token_type": "bearer"}
