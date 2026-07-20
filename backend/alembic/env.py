@@ -10,10 +10,11 @@ load_dotenv()
 
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", "backend"))
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from database import Base
-import models
+from src.database import Base
+from src.auth import models as auth_models
+from src.internships import models as internship_models
 
 
 

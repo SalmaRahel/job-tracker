@@ -1,9 +1,10 @@
+#dependencies
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPAuthorizationCredentials 
 import jwt
 from sqlalchemy.orm import Session
-from database import get_db
-from models import User
+from ..database import get_db
+from .models import User
 from dotenv import load_dotenv
 import os
 from fastapi.security import HTTPBearer
