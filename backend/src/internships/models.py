@@ -1,10 +1,8 @@
-from database import Base
-
+from ..database import Base
 from sqlalchemy import String, Text, Date, Enum, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship 
 from typing import Optional
 from datetime import date
-
 import enum
 
 class ApplicationStatus(enum.Enum):
@@ -17,7 +15,7 @@ class ApplicationStatus(enum.Enum):
     REJECTED = "Rejected"
     WITHDRAWN = "Withdrawn"
 
-#Mapped is a type hint that tell python and SQLalchemy that this attribute is mapped to a column in database
+
 class Internship(Base):
     __tablename__ = "internship"
 
@@ -31,10 +29,19 @@ class Internship(Base):
     notes: Mapped[Optional[str]] = mapped_column(Text(), nullable=True)
     status: Mapped[ApplicationStatus] = mapped_column(Enum(ApplicationStatus))
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    user: Mapped["User"] = relationship("User", back_populates="internships")
 
-class User(Base):
-    __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
-    hashed_password: Mapped[str] = mapped_column(Text(), nullable=False)
+
+
+
+
+
+
+
+
+
+
+
+
+
