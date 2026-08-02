@@ -1,16 +1,12 @@
 #database.py
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker , DeclarativeBase 
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
-
+from src.config import settings
 
 
 #it know how to open a connection to the database
 #it create ready connection(session) that is ready to borrow
-engine = create_engine(os.getenv("DATABASE_URL"))
+engine = create_engine(settings.database_url)
 
 #it dosn't create session 
 #it create a factory that when it called "SessionLocal()" it create session 
