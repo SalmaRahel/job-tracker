@@ -5,17 +5,18 @@ import jwt
 from sqlalchemy.orm import Session
 from ..database import get_db
 from .models import User
-from dotenv import load_dotenv
-import os
+from src.config import settings
 from fastapi.security import HTTPBearer
 
-load_dotenv()
+ALGORITHM = "HS256"
+
+
 
 http_bearer = HTTPBearer()
 
 def get_current_user(credentials: HTTPAuthorizationCredentials  = Depends(http_bearer), db: Session = Depends(get_db)):
     try:
-        payload = jwt.decode(credentials.credentials, os.getenv("SECRET_KEY"), algorithms=[os.getenv("ALGORITHM")])
+        payload = jwt.decode(credentials.credentials, settings.secret_key, algorithms=[ALGORITHM])
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Token error")
     

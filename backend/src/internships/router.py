@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/internships", tags=["internships"])
 
-@router.post("/")
+@router.post("/", status_code=201)
 def create_internships(inter: InternshipCreate, db: Session=Depends(get_db), user: User=Depends(get_current_user)): 
     new_internship = Internship(
         company_name     = inter.company_name,

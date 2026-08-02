@@ -5,12 +5,12 @@ from .schemas import UserCreate, UserResponse, UserLogin
 from sqlalchemy.orm import Session
 from .security import hash_password, verify_password 
 from datetime import datetime, timedelta, timezone
-from dotenv import load_dotenv
-import os
+from src.config import settings
+from .dependencies import ALGORITHM
 import jwt
 import logging
 
-load_dotenv()
+
 
 router = APIRouter(tags=["auth"])
 
@@ -18,7 +18,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-@router.post("/register", response_model=UserResponse)
+@router.post("/register", response_model=UserResponse, status_code=201)
 def create_user(user: UserCreate, db: Session=Depends(get_db)):
     existing = db.query(User).filter(User.email == user.email).first() 
     if existing is not None:
@@ -47,8 +47,8 @@ def login_user(user: UserLogin, db: Session=Depends(get_db)):
     logger.info(f"user id[{existing.id}] logged in")
     payload = { 
         "sub": str(existing.id),
-        "exp": datetime.now(timezone.utc) + timedelta(minutes=int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")))
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=int(settings.access_token_expire_minutes))
     }
 
-    token = jwt.encode(payload, os.getenv("SECRET_KEY"), algorithm=os.getenv("ALGORITHM"))
+    token = jwt.encode(payload, settings.secret_key, algorithm=ALGORITHM)
     return {"access_token": token, "token_type": "bearer"}
