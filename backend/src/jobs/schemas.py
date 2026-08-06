@@ -4,7 +4,7 @@ from datetime import date
 from .models import ApplicationStatus
 
 
-class InternshipCreate(BaseModel):
+class JobCreate(BaseModel):
     company_name: str
     position: str
     location: str
@@ -15,7 +15,7 @@ class InternshipCreate(BaseModel):
 
 
 
-class InternshipResponse(BaseModel):
+class JobResponse(BaseModel):
     id: int
     company_name: str
     position: str
@@ -30,7 +30,7 @@ class InternshipResponse(BaseModel):
         from_attributes = True
 
 
-class InternshipUpdate(BaseModel):
+class JobUpdate(BaseModel):
     company_name: Optional[str] = None
     position: Optional[str] = None
     location: Optional[str] = None

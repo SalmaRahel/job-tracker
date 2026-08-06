@@ -14,7 +14,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from src.database import Base
 from src.auth import models as auth_models
-from src.internships import models as internship_models
+from src.jobs import models as job_models
 
 
 

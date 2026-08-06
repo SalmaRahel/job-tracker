@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status # The main FastAPI class — creates the app object
-from .models import  User   # ORM model (Internship) + enum (ApplicationStatus)
+from .models import  User   # ORM model (Job) + enum (ApplicationStatus)
 from ..database import get_db                  # Session factory — call SessionLocal() to get a DB session
 from .schemas import UserCreate, UserResponse, UserLogin     
 from sqlalchemy.orm import Session
