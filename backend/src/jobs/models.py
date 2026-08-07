@@ -1,8 +1,8 @@
 from ..database import Base
-from sqlalchemy import String, Text, Date, Enum, ForeignKey
+from sqlalchemy import String, Text, Date, Enum, ForeignKey, func, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import Optional
-from datetime import date
+from datetime import date, datetime
 import enum
 from typing import TYPE_CHECKING
 
@@ -24,6 +24,7 @@ class Job(Base):
     __tablename__ = "job"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     company_name: Mapped[str] = mapped_column(String(100))
     position: Mapped[str] = mapped_column(String(150))
     location: Mapped[str] = mapped_column(String(50))
