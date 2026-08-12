@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
-from datetime import date
+from datetime import date, datetime
 from .models import ApplicationStatus
 
 
@@ -25,9 +25,21 @@ class JobResponse(BaseModel):
     job_link: Optional[str] = None
     notes: Optional[str] = None
     status: ApplicationStatus
+    created_at: datetime
 
     class Config:
         from_attributes = True
+
+class CursorOut(BaseModel):
+    id: int
+    created_at: datetime
+
+class JobPage(BaseModel):
+    items: list[JobResponse]
+    has_more: bool
+    next_cursor: Optional[CursorOut] = None
+
+
 
 
 class JobUpdate(BaseModel):
