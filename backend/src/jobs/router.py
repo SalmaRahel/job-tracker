@@ -3,7 +3,7 @@ from .models import ApplicationStatus, Job  # ORM model (Job) + enum (Applicatio
 from ..auth.models import User
 from ..database import get_db                  # Session factory — call SessionLocal() to get a DB session
 from ..auth.dependencies import get_current_user
-from .schemas import JobCreate, JobResponse, JobUpdate
+from .schemas import JobCreate, JobResponse, JobUpdate, JobPage
 from sqlalchemy.orm import Session
 from typing import Optional
 from datetime import  datetime
