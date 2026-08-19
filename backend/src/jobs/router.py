@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from typing import Optional
 from datetime import  datetime
 from sqlalchemy import select, or_, and_
+from sqlalchemy import func
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
@@ -20,7 +21,7 @@ def create_jobs(inter: JobCreate, db: Session=Depends(get_db), user: User=Depend
         application_date = inter.application_date,
         deadline         = inter.deadline,
         job_link         = inter.job_link,
-        notes            = inter.notes,
+        job_description            = inter.job_description,
         status           = ApplicationStatus.SAVED,
         user_id          = user.id
     )
@@ -32,7 +33,7 @@ def create_jobs(inter: JobCreate, db: Session=Depends(get_db), user: User=Depend
 
 
 @router.get("/", response_model=JobPage)
-def get_jobs(db: Session=Depends(get_db), user: User=Depends(get_current_user), last_seen_created_at: Optional[datetime] = None, last_seen_id: Optional[int] = None):
+def get_jobs(db: Session=Depends(get_db), user: User=Depends(get_current_user), last_seen_created_at: Optional[datetime] = None, last_seen_id: Optional[int] = None, search: Optional[str] = None):
     """Returns one page of jobs. On the first page, don't send cursor params."""
     LIMIT=20
     stmt = (
@@ -52,6 +53,9 @@ def get_jobs(db: Session=Depends(get_db), user: User=Depends(get_current_user), 
             )
     else:
         raise HTTPException(status_code = 400, detail = "both cursor params required together, or neither.")
+
+    if search is not None:
+        stmt = stmt.where(Job.search_vector.op("@@")(func.websearch_to_tsquery('english', search)))
     rows = db.execute(stmt).scalars().all()
 
     has_more = len(rows) > LIMIT

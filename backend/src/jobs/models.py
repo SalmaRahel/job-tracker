@@ -1,11 +1,12 @@
 from ..database import Base
-from sqlalchemy import String, Text, Date, Enum, ForeignKey, func, DateTime
+from sqlalchemy import String, Text, Date, Enum, ForeignKey, func, DateTime, Computed
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import Optional
 from datetime import date, datetime
 import enum
 from typing import TYPE_CHECKING
 from sqlalchemy.dialects.postgresql import TSVECTOR
+
 
 if TYPE_CHECKING:
     from ..auth.models import User
@@ -36,7 +37,11 @@ class Job(Base):
     status: Mapped[ApplicationStatus] = mapped_column(Enum(ApplicationStatus))
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     user: Mapped["User"] = relationship("User", back_populates="jobs")
-    search_vector: Mapped[str] = mapped_column(TSVECTOR)
+    search_vector: Mapped[Optional[str]] = mapped_column(
+    TSVECTOR,
+    Computed("to_tsvector('english', company_name || ' ' || position || ' ' || job_description)"),
+    nullable=True
+)
     
 
 
