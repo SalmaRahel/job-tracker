@@ -5,6 +5,7 @@ from typing import Optional
 from datetime import date, datetime
 import enum
 from typing import TYPE_CHECKING
+from sqlalchemy.dialects.postgresql import TSVECTOR
 
 if TYPE_CHECKING:
     from ..auth.models import User
@@ -28,13 +29,15 @@ class Job(Base):
     company_name: Mapped[str] = mapped_column(String(100))
     position: Mapped[str] = mapped_column(String(150))
     location: Mapped[str] = mapped_column(String(50))
+    job_description: Mapped[str] = mapped_column(Text())
     application_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     deadline: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     job_link: Mapped[Optional[str]] = mapped_column(String(250), nullable=True)
-    notes: Mapped[Optional[str]] = mapped_column(Text(), nullable=True)
     status: Mapped[ApplicationStatus] = mapped_column(Enum(ApplicationStatus))
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     user: Mapped["User"] = relationship("User", back_populates="jobs")
+    search_vector: Mapped[str] = mapped_column(TSVECTOR)
+    
 
 
 
