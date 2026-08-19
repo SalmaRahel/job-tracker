@@ -11,8 +11,7 @@ class JobCreate(BaseModel):
     application_date: Optional[date] = None
     deadline: Optional[date] = None
     job_link: Optional[str] = None
-    notes: Optional[str] = None
-
+    job_description: str
 
 
 class JobResponse(BaseModel):
@@ -23,7 +22,7 @@ class JobResponse(BaseModel):
     application_date: Optional[date] = None
     deadline: Optional[date] = None
     job_link: Optional[str] = None
-    notes: Optional[str] = None
+    job_description: str
     status: ApplicationStatus
     created_at: datetime
 
@@ -49,5 +48,5 @@ class JobUpdate(BaseModel):
     application_date: Optional[date] = None
     deadline: Optional[date] = None
     job_link: Optional[str] = None
-    notes: Optional[str] = None
     status: Optional[ApplicationStatus] = None
+    job_description: Optional[str] = None
