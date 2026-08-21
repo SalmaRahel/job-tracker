@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, model_validator
 
 class ExperienceItem(BaseModel):
     title: str
@@ -38,3 +38,9 @@ class ProfileCreate(BaseModel):
     education_json: list[EducationItem] | None = None
     links_json: list[LinkItem] | None = None
     languages_json: list[str] | None = None
+
+    @model_validator(mode="after")
+    def check_not_empty(self):
+        if not (self.experience_json or self.education_json or self.projects_json):
+            raise ValueError("provide at least one of experience, education, or projects")
+        return self
