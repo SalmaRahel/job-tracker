@@ -1,5 +1,5 @@
 from ..database import Base
-from sqlalchemy import String, Text, Date, Enum, ForeignKey, func, DateTime, Computed
+from sqlalchemy import String, Text, Date, Enum, ForeignKey, func, DateTime, Computed, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import Optional
 from datetime import date, datetime
@@ -41,9 +41,6 @@ class Job(Base):
     TSVECTOR,
     Computed("to_tsvector('english', company_name || ' ' || position || ' ' || job_description)"),
     nullable=True
-)
-    
-
-
+)  
 
 

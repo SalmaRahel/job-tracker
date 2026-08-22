@@ -1,0 +1,87 @@
+from pydantic import BaseModel, EmailStr, model_validator
+from typing import Optional
+
+class SkillCreate(BaseModel):
+    name: str
+
+class SkillResponse(BaseModel):
+    id: int
+    name: str
+
+    class Config:
+        from_attributes = True
+
+class ExperienceItem(BaseModel):
+    title: str
+    company: str
+    duration: str
+    description: str
+
+class EducationItem(BaseModel):
+    school: str
+    degree: str
+    field: str
+    year: str
+
+class ProjectItem(BaseModel):
+    name: str
+    description: str
+    stack: str | None = None
+    link: str | None = None
+
+class CertificationItem(BaseModel):
+    name: str
+    issuer: str
+    year: str
+
+class LinkItem(BaseModel):
+    label: str
+    url: str
+
+class ProfileCreate(BaseModel):
+    full_name: str
+    email: EmailStr
+    phone: str | None = None
+    city: str | None = None
+    certifications_json: list[CertificationItem] | None = None
+    projects_json: list[ProjectItem] | None = None
+    experience_json: list[ExperienceItem] | None = None
+    education_json: list[EducationItem] | None = None
+    links_json: list[LinkItem] | None = None
+    languages_json: list[str] | None = None
+
+    @model_validator(mode="after")
+    def check_not_empty(self):
+        if not (self.experience_json or self.education_json or self.projects_json):
+            raise ValueError("provide at least one of experience, education, or projects")
+        return self
+
+
+class ProfileResponse(BaseModel):
+    id: int
+    full_name: str
+    email: EmailStr
+    phone: str | None = None
+    city: str | None = None
+    certifications_json: list[CertificationItem] | None = None
+    projects_json: list[ProjectItem] | None = None
+    experience_json: list[ExperienceItem] | None = None
+    education_json: list[EducationItem] | None = None
+    links_json: list[LinkItem] | None = None
+    languages_json: list[str] | None = None
+
+    class Config:
+        from_attributes = True
+
+
+class ProfileUpdate(BaseModel):
+    full_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    city: Optional[str] = None
+    certifications_json: Optional[list[CertificationItem]] = None
+    projects_json: Optional[list[ProjectItem]] = None
+    experience_json: Optional[list[ExperienceItem]] = None
+    education_json: Optional[list[EducationItem]] = None
+    links_json: Optional[list[LinkItem]] = None
+    languages_json: Optional[list[str]] = None
