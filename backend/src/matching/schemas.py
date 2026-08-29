@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 class JDExtraction(BaseModel):
     required_skills: list[str]
@@ -9,3 +9,7 @@ class JDExtraction(BaseModel):
 
 class JDExtractionRequest(BaseModel):
     jd_text: str
+
+class MatchingOutput(BaseModel):
+    score: int = Field(ge=0, le=100)
+    missing_requirements: list[str]

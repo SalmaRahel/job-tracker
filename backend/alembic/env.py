@@ -16,7 +16,7 @@ from src.database import Base
 from src.auth import models as auth_models
 from src.jobs import models as job_models
 from src.profile import models as profile_models
-
+from src.matching import models as matching_models
 
 
 # this is the Alembic Config object, which provides

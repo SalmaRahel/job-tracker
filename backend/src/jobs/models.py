@@ -10,6 +10,7 @@ from sqlalchemy.dialects.postgresql import TSVECTOR
 
 if TYPE_CHECKING:
     from ..auth.models import User
+    from ..matching.models import MatchResult
 
 class ApplicationStatus(enum.Enum):
     SAVED = "Saved"
@@ -30,17 +31,20 @@ class Job(Base):
     company_name: Mapped[str] = mapped_column(String(100))
     position: Mapped[str] = mapped_column(String(150))
     location: Mapped[str] = mapped_column(String(50))
-    job_description: Mapped[str] = mapped_column(Text())
+    job_description: Mapped[Optional[str]] = mapped_column(Text(), nullable=True)
     application_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     deadline: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     job_link: Mapped[Optional[str]] = mapped_column(String(250), nullable=True)
     status: Mapped[ApplicationStatus] = mapped_column(Enum(ApplicationStatus))
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     user: Mapped["User"] = relationship("User", back_populates="jobs")
+    matchresult: Mapped["MatchResult"] = relationship("MatchResult", back_populates="job", uselist=False)
     search_vector: Mapped[Optional[str]] = mapped_column(
     TSVECTOR,
-    Computed("to_tsvector('english', company_name || ' ' || position || ' ' || job_description)"),
+    Computed(
+        "to_tsvector('english', company_name || ' ' || position || ' ' || coalesce(job_description, ''))"
+    ),
     nullable=True
-)  
+)
 
 
