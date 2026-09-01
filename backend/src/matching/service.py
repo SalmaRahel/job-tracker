@@ -1,5 +1,5 @@
 import json
-from .gemini import call_gemini
+from ..gemini import call_gemini
 from .schemas import JDExtraction, MatchingOutput
 from ..profile.schemas import ProfileResponse
 from pydantic import ValidationError
