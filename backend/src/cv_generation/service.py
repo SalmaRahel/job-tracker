@@ -3,6 +3,10 @@ from ..gemini import call_gemini
 from .schemas import CVContent
 from ..profile.schemas import ProfileResponse
 from pydantic import ValidationError
+from jinja2 import Environment, FileSystemLoader
+import os
+
+BASE_DIR = os.path.dirname(__file__)
 
 def generate_cv_content(profile: ProfileResponse, jd_text: str) -> CVContent:
     CV_GENERATION_PROMPT = f"""You are a CV content generator. You will receive a candidate's profile data and a job description. Generate tailored CV content in JSON only — no prose, no markdown, no explanation outside the JSON.
@@ -49,3 +53,41 @@ JOB DESCRIPTION:
     except ValidationError as e:
         raise ValueError(f"Gemini returned invalid shape: {e}")
     return validated
+
+
+def render_cv_html(profile: ProfileResponse, cv_content: CVContent, palette_name: str):
+    context_dict = {
+        "full_name": profile.full_name,
+        "email": profile.email,
+        "phone": profile.phone,
+        "city": profile.city,
+        "links": profile.links_json,
+        "skills": profile.skills,
+        "languages": profile.languages_json,
+        "summary": cv_content.summary,
+        "experience": cv_content.experience,
+        "education": cv_content.education,
+        "projects": cv_content.projects,
+        "certifications": cv_content.certifications
+    }
+    templates_dir = os.path.join(BASE_DIR, "templates")
+    env = Environment(loader=FileSystemLoader(templates_dir))
+    if palette_name is None:
+      template = env.get_template("plain_template.html")
+    else:
+      template = env.get_template("colored_template.html")
+      palette_path = os.path.join(BASE_DIR, "palette.json")
+      with open(palette_path) as f:
+         palettes = json.load(f)
+         selected_palette = palettes[palette_name]
+         context_dict.update(selected_palette)
+
+    html = template.render(context_dict)
+    return html
+
+
+
+  
+
+    
+    

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face { font-family: 'Poppins'; src: url('fonts/Poppins-Regular.ttf'); font-weight: 400; }
+  @font-face { font-family: 'Poppins'; src: url('fonts/Poppins-Medium.ttf'); font-weight: 500; }
+  @font-face { font-family: 'Poppins'; src: url('fonts/Poppins-SemiBold.ttf'); font-weight: 600; }
+  @font-face { font-family: 'Poppins'; src: url('fonts/Poppins-Bold.ttf'); font-weight: 700; }
+  @font-face { font-family: 'Poppins'; src: url('fonts/Poppins-Bold.ttf'); font-weight: 800; }
+  @font-face { font-family: 'Poppins'; src: url('fonts/Poppins-Italic.ttf'); font-style: italic; }
+
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  :root { --accent: {{ accent }}; --accent-light: {{ accent_light }}; --heading-color: {{ heading_color }}; --sidebar-text: {{ sidebar_text }}; --sidebar-text-dim: {{ sidebar_text_dim }}; --sidebar-text-faint: {{ sidebar_text_faint }}; --sidebar-border: {{ sidebar_border }}; --pill-bg: {{ pill_bg }}; --pill-border: {{ pill_border }}; }
+  body { margin: 0; font-family: 'Poppins', sans-serif; font-size: 10pt; color: #2b2b2b; }
+
+  .page { display: flex; width: 100%; min-height: 29.7cm; }
+
+  .sidebar { width: 34%; background: var(--accent); color: var(--sidebar-text); padding: 40px 22px; }
+  .main { width: 66%; padding: 40px 30px; }
+
+  .name-big { font-size: 26pt; font-weight: 800; line-height: 1.15; margin-bottom: 4px; color: var(--sidebar-text); letter-spacing: 0.5px; }
+  .role { font-size: 10.5pt; color: var(--accent-light); margin-bottom: 24px; }
+
+  .side-h { font-size: 9.5pt; text-transform: uppercase; letter-spacing: 1px; color: var(--accent-light); border-bottom: 1px solid var(--sidebar-border); padding-bottom: 4px; margin: 20px 0 8px 0; }
+  .side-h:first-of-type { margin-top: 0; }
+  .contact-item { font-size: 9pt; margin-bottom: 5px; color: var(--sidebar-text-dim); word-break: break-word; }
+
+  .skill-pill { display: inline-block; background: var(--pill-bg); border: 1px solid var(--pill-border); border-radius: 10px; padding: 3px 9px; margin: 2px 4px 2px 0; font-size: 8.5pt; color: var(--sidebar-text); }
+
+  .side-entry { margin-bottom: 10px; }
+  .side-entry-title { font-size: 9.5pt; font-weight: 600; color: var(--sidebar-text); }
+  .side-entry-meta { font-size: 8.5pt; color: var(--sidebar-text-faint); }
+
+  .main-h { font-size: 12pt; font-weight: 700; color: var(--heading-color); margin: 0 0 4px 0; padding-bottom: 4px; border-bottom: 2px solid var(--accent-light); }
+  .main-h:not(:first-child) { margin-top: 20px; }
+
+  .summary { font-size: 10pt; line-height: 1.55; margin-top: 8px; color: #333; }
+
+  .entry { margin-top: 12px; }
+  .entry-title { font-weight: 700; font-size: 10.5pt; color: var(--heading-color); }
+  .entry-sub { font-size: 9.5pt; color: #5a6b7a; font-style: italic; margin-bottom: 3px; }
+  ul { margin: 4px 0 0 0; padding-left: 15px; }
+  li { margin-bottom: 3px; line-height: 1.4; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="sidebar">
+    <div class="name-big">{{ full_name.split(' ', 1)[0] }}<br>{{ full_name.split(' ', 1)[1] if ' ' in full_name else '' }}</div>
+
+    <div class="side-h">Contact</div>
+    <div class="contact-item">{{ email }}</div>
+    {% if phone %}<div class="contact-item">{{ phone }}</div>{% endif %}
+    {% if city %}<div class="contact-item">{{ city }}</div>{% endif %}
+    {% for link in links %}<div class="contact-item">{{ link.label }}: {{ link.url }}</div>{% endfor %}
+
+    {% if skills %}
+    <div class="side-h">Skills</div>
+    {% for skill in skills %}<span class="skill-pill">{{ skill }}</span>{% endfor %}
+    {% endif %}
+
+    {% if education %}
+    <div class="side-h">Education</div>
+    {% for edu in education %}
+    <div class="side-entry">
+      <div class="side-entry-title">{{ edu.school }}</div>
+      <div class="side-entry-meta">{{ edu.degree }}{% if edu.field %}, {{ edu.field }}{% endif %}, {{ edu.year }}</div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if certifications %}
+    <div class="side-h">Certifications</div>
+    {% for cert in certifications %}
+    <div class="side-entry">
+      <div class="side-entry-title">{{ cert.name }}</div>
+      <div class="side-entry-meta">{{ cert.issuer }}, {{ cert.year }}</div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if languages %}
+    <div class="side-h">Languages</div>
+    {% for lang in languages %}<div class="contact-item">{{ lang }}</div>{% endfor %}
+    {% endif %}
+  </div>
+
+  <div class="main">
+    {% if summary %}
+    <div class="main-h">Summary</div>
+    <p class="summary">{{ summary }}</p>
+    {% endif %}
+
+    {% if experience %}
+    <div class="main-h">Experience</div>
+    {% for job in experience %}
+    <div class="entry">
+      <div class="entry-title">{{ job.title }} — {{ job.company }}</div>
+      <div class="entry-sub">{{ job.duration }}</div>
+      <ul>
+        {% for bullet in job.description %}<li>{{ bullet }}</li>{% endfor %}
+      </ul>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if projects %}
+    <div class="main-h">Projects</div>
+    {% for project in projects %}
+    <div class="entry">
+      <div class="entry-title">{{ project.name }}</div>
+      {% if project.link %}<div class="entry-sub">{{ project.link }}</div>{% endif %}
+      <ul>
+        {% for bullet in project.description %}<li>{{ bullet }}</li>{% endfor %}
+      </ul>
+    </div>
+    {% endfor %}
+    {% endif %}
+  </div>
+
+</div>
+</body>
+</html>
