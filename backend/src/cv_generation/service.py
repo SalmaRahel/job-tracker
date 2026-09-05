@@ -5,8 +5,14 @@ from ..profile.schemas import ProfileResponse
 from pydantic import ValidationError
 from jinja2 import Environment, FileSystemLoader
 import os
+from weasyprint import HTML
+import boto3
+from src.config import settings
+
+s3_client = boto3.client("s3")
 
 BASE_DIR = os.path.dirname(__file__)
+TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
 
 def generate_cv_content(profile: ProfileResponse, jd_text: str) -> CVContent:
     CV_GENERATION_PROMPT = f"""You are a CV content generator. You will receive a candidate's profile data and a job description. Generate tailored CV content in JSON only — no prose, no markdown, no explanation outside the JSON.
@@ -70,13 +76,12 @@ def render_cv_html(profile: ProfileResponse, cv_content: CVContent, palette_name
         "projects": cv_content.projects,
         "certifications": cv_content.certifications
     }
-    templates_dir = os.path.join(BASE_DIR, "templates")
-    env = Environment(loader=FileSystemLoader(templates_dir))
+    env = Environment(loader=FileSystemLoader(TEMPLATES_DIR))
     if palette_name is None:
       template = env.get_template("plain_template.html")
     else:
       template = env.get_template("colored_template.html")
-      palette_path = os.path.join(BASE_DIR, "palette.json")
+      palette_path = os.path.join(TEMPLATES_DIR, "palette.json")
       with open(palette_path) as f:
          palettes = json.load(f)
          selected_palette = palettes[palette_name]
@@ -86,8 +91,16 @@ def render_cv_html(profile: ProfileResponse, cv_content: CVContent, palette_name
     return html
 
 
-
-  
+def render_cv_pdf(html_string: str) -> bytes:
+   pdf_bytes = HTML(string=html_string, base_url=TEMPLATES_DIR).write_pdf()
+   return pdf_bytes
 
     
-    
+def upload_cv_to_s3(pdf_bytes: bytes, key: str) -> str:
+  s3_client.put_object(
+        Bucket=settings.bucket_name,
+        Key=key,
+        Body=pdf_bytes,
+        ContentType="application/pdf"
+    )
+  return key
