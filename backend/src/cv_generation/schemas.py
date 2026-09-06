@@ -34,3 +34,9 @@ class CVContent(BaseModel):
     education: list[CVEducationEntry] = Field(default_factory=list)
     projects: list[CVProjectEntry] = Field(default_factory=list)
     certifications: list[CVCertificationEntry] = Field(default_factory=list)
+
+class CVDownloadKeyResponse(BaseModel):
+    s3_key: str
+
+class CVDownloadUrlResponse(BaseModel):
+    url: str
