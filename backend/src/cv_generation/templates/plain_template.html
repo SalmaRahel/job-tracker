@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face { font-family: 'Poppins'; src: url('fonts/Poppins-Regular.ttf'); font-weight: 400; }
+  @font-face { font-family: 'Poppins'; src: url('fonts/Poppins-Medium.ttf'); font-weight: 500; }
+  @font-face { font-family: 'Poppins'; src: url('fonts/Poppins-SemiBold.ttf'); font-weight: 600; }
+  @font-face { font-family: 'Poppins'; src: url('fonts/Poppins-Bold.ttf'); font-weight: 700; }
+  @font-face { font-family: 'Poppins'; src: url('fonts/Poppins-Italic.ttf'); font-style: italic; }
+
+  @page { size: A4; margin: 2cm 2.2cm; }
+  body { font-family: 'Poppins', sans-serif; color: #1a1a1a; font-size: 10.5pt; line-height: 1.45; }
+  h1 { font-size: 20pt; margin: 0 0 2px 0; }
+  .contact { font-size: 9pt; color: #555; margin-bottom: 14px; }
+  h2 { font-size: 11pt; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1.2px solid #333; padding-bottom: 3px; margin: 16px 0 8px 0; color: #222; }
+  .entry { margin-bottom: 10px; }
+  .entry-title { font-weight: bold; font-size: 10.5pt; }
+  .entry-meta { font-size: 9.5pt; color: #555; font-style: italic; }
+  ul { margin: 4px 0 0 0; padding-left: 16px; }
+  li { margin-bottom: 2px; }
+  .skills { display: block; }
+  .skill-tag { display: inline-block; background: #f0f0f0; border-radius: 3px; padding: 2px 8px; margin: 2px 4px 2px 0; font-size: 9.5pt; }
+  .summary { margin-bottom: 4px; }
+</style>
+</head>
+<body>
+
+<h1>{{ full_name }}</h1>
+<div class="contact">
+  {{ email }}
+  {% if phone %} &nbsp;|&nbsp; {{ phone }}{% endif %}
+  {% if city %} &nbsp;|&nbsp; {{ city }}{% endif %}
+  {% for link in links %} &nbsp;|&nbsp; {{ link.label }}: {{ link.url }}{% endfor %}
+</div>
+
+{% if summary %}
+<h2>Summary</h2>
+<p class="summary">{{ summary }}</p>
+{% endif %}
+
+{% if skills %}
+<h2>Skills</h2>
+<div class="skills">
+  {% for skill in skills %}<span class="skill-tag">{{ skill }}</span>{% endfor %}
+</div>
+{% endif %}
+
+{% if experience %}
+<h2>Experience</h2>
+{% for job in experience %}
+<div class="entry">
+  <div class="entry-title">{{ job.title }} — {{ job.company }}</div>
+  <div class="entry-meta">{{ job.duration }}</div>
+  <ul>
+    {% for bullet in job.description %}<li>{{ bullet }}</li>{% endfor %}
+  </ul>
+</div>
+{% endfor %}
+{% endif %}
+
+{% if projects %}
+<h2>Projects</h2>
+{% for project in projects %}
+<div class="entry">
+  <div class="entry-title">{{ project.name }}</div>
+  {% if project.link %}<div class="entry-meta">{{ project.link }}</div>{% endif %}
+  <ul>
+    {% for bullet in project.description %}<li>{{ bullet }}</li>{% endfor %}
+  </ul>
+  {% if project.tech_stack %}<div class="entry-meta">Stack: {{ project.tech_stack }}</div>{% endif %}
+</div>
+{% endfor %}
+{% endif %}
+
+{% if education %}
+<h2>Education</h2>
+{% for edu in education %}
+<div class="entry">
+  <div class="entry-title">{{ edu.school }} — {{ edu.degree }}{% if edu.field %}, {{ edu.field }}{% endif %}</div>
+  <div class="entry-meta">{{ edu.year }}</div>
+</div>
+{% endfor %}
+{% endif %}
+
+{% if certifications %}
+<h2>Certifications</h2>
+{% for cert in certifications %}
+<div class="entry">
+  <div class="entry-title">{{ cert.name }} — {{ cert.issuer }}</div>
+  <div class="entry-meta">{{ cert.year }}</div>
+</div>
+{% endfor %}
+{% endif %}
+
+{% if languages %}
+<h2>Languages</h2>
+<div class="skills">
+  {% for lang in languages %}<span class="skill-tag">{{ lang }}</span>{% endfor %}
+</div>
+{% endif %}
+
+</body>
+</html>

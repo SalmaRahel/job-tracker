@@ -11,6 +11,7 @@ from sqlalchemy.dialects.postgresql import TSVECTOR
 if TYPE_CHECKING:
     from ..auth.models import User
     from ..matching.models import MatchResult
+    from ..cv_generation.models import CVGeneration
 
 class ApplicationStatus(enum.Enum):
     SAVED = "Saved"
@@ -39,6 +40,7 @@ class Job(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     user: Mapped["User"] = relationship("User", back_populates="jobs")
     matchresult: Mapped["MatchResult"] = relationship("MatchResult", back_populates="job", uselist=False)
+    cvgeneration: Mapped["CVGeneration"] = relationship("CVGeneration", back_populates="job", uselist=False)
     search_vector: Mapped[Optional[str]] = mapped_column(
     TSVECTOR,
     Computed(

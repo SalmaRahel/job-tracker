@@ -1,0 +1,36 @@
+{
+  "dark_gray_blue": {
+    "accent": "#3a4750",
+    "accent-light": "#9fb3c8",
+    "heading-color": "#3a4750",
+    "sidebar-text": "#eef1f5",
+    "sidebar-text-dim": "#d4dce4",
+    "sidebar-text-faint": "#b8c4d0",
+    "sidebar-border": "rgba(255,255,255,0.25)",
+    "pill-bg": "rgba(255,255,255,0.12)",
+    "pill-border": "rgba(255,255,255,0.3)",
+    "_note": "PLACEHOLDER hex - swap accent + heading-color once exact Canva hex is confirmed"
+  },
+  "frosted_mint": {
+    "accent": "#c2e9ff",
+    "accent-light": "#3a4750",
+    "heading-color": "#3a4750",
+    "sidebar-text": "#1f2d3d",
+    "sidebar-text-dim": "#3a4a5c",
+    "sidebar-text-faint": "#5a6b7a",
+    "sidebar-border": "rgba(0,0,0,0.15)",
+    "pill-bg": "rgba(255,255,255,0.5)",
+    "pill-border": "rgba(0,0,0,0.15)"
+  },
+  "light_gray": {
+    "accent": "#d9d9d9",
+    "accent-light": "#3a4750",
+    "heading-color": "#3a4750",
+    "sidebar-text": "#222222",
+    "sidebar-text-dim": "#3f3f3f",
+    "sidebar-text-faint": "#5c5c5c",
+    "sidebar-border": "rgba(0,0,0,0.2)",
+    "pill-bg": "rgba(255,255,255,0.6)",
+    "pill-border": "rgba(0,0,0,0.15)"
+  }
+}
