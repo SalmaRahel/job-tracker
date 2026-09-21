@@ -1,13 +1,19 @@
 import json
 from ..gemini import call_gemini
-from .schemas import CVContent
+from .schemas import CVContent, CVDownloadKeyResponse
 from ..profile.schemas import ProfileResponse
+from ..profile.models import Profile
 from pydantic import ValidationError
 from jinja2 import Environment, FileSystemLoader
 import os
 from weasyprint import HTML
 import boto3
 from src.config import settings
+from sqlalchemy.orm import Session
+from ..jobs.models import Job
+from ..database import SessionLocal
+from .models import CVGeneration
+from .utils import compute_idempotency_key
 
 s3_client = boto3.client("s3")
 
@@ -104,3 +110,45 @@ def upload_cv_to_s3(pdf_bytes: bytes, key: str) -> str:
         ContentType="application/pdf"
     )
   return key
+
+def cv_generation(id: int, palette_name: str, db: Session):
+    job = db.query(Job).filter(Job.id == id).first()
+    if job is None:
+        return
+    
+    profile = db.query(Profile).filter(Profile.user_id == job.user_id).first()
+    if profile is None or len(profile.skills) < 3:
+        return
+
+    key = compute_idempotency_key(id, profile)
+
+    cv_result = db.query(CVGeneration).filter(CVGeneration.key == key).first()
+    if cv_result:
+        return CVDownloadKeyResponse(s3_key=cv_result.s3_key)
+
+    #generating cv content
+    try:
+        cv_content = generate_cv_content(profile, job.job_description)
+    except ValueError:
+        return
+
+    #transforming cv_content to html
+    cv_html = render_cv_html(profile, cv_content, palette_name)
+
+    #transformting from html to pdf_yte
+    pdf_bytes = render_cv_pdf(cv_html)
+
+    s3_key = upload_cv_to_s3(pdf_bytes, key)
+
+    new_cv = CVGeneration(key=key, job_id=id, s3_key=s3_key)
+    db.add(new_cv)
+    db.commit()
+
+    return CVDownloadKeyResponse(s3_key=s3_key)
+
+def run_cv_generation(id: int, palette_name: str):
+    db = SessionLocal()
+    try:
+        cv_generation(id, palette_name, db)
+    finally:
+        db.close()
