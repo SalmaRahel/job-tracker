@@ -7,11 +7,7 @@ _readonly_engine: Engine | None = None
 
 
 def get_readonly_engine() -> Engine:
-    """Engine that connects as the job_search_ro Postgres role (SELECT-only, RLS applies).
-
-    Separate from src.database.engine, which the rest of the app uses.
-    Created on first use so the app still starts if READONLY_DATABASE_URL is not set.
-    """
+    """Engine for the job_search_ro role, created on first use."""
     global _readonly_engine
     if _readonly_engine is None:
         if not settings.readonly_database_url:
