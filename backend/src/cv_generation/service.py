@@ -1,4 +1,5 @@
 import json
+import logging
 from ..gemini import call_gemini
 from .schemas import CVContent, CVDownloadKeyResponse
 from ..profile.schemas import ProfileResponse
@@ -17,6 +18,8 @@ from .utils import compute_idempotency_key
 from ..background_jobs.redis_client import r
 
 s3_client = boto3.client("s3")
+
+logger = logging.getLogger(__name__)
 
 BASE_DIR = os.path.dirname(__file__)
 TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
@@ -149,7 +152,7 @@ def cv_generation(id: int, palette_name: str, db: Session):
         payload = json.dumps({"user_id": job.user_id, "message": f"cv generated for user: {job.user_id}, job_id: {job.id}"})
         r.publish("notification", payload)
     except Exception:
-        pass
+        logger.exception("Failed to publish CV generation notification for job_id=%s", job.id)
 
     return CVDownloadKeyResponse(s3_key=s3_key)
 
