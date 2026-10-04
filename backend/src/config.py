@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     bucket_name: str
     redis_url: str
     cors_allowed_origins: str = ""
+    action_cooldown_seconds: int = 45
     model_config = SettingsConfigDict(env_file=".env")
 
     @property

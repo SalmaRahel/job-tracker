@@ -8,7 +8,7 @@ from .models import CVGeneration
 from .schemas import CVDownloadUrlResponse
 import boto3
 from src.config import settings
-from ..background_jobs.redis_client import r
+from ..background_jobs.redis_client import r, check_and_set_cooldown
 
 s3_client = boto3.client("s3")
 
@@ -19,6 +19,9 @@ def generate_cv(id: int, palette_name: str, db: Session = Depends(get_db), user:
     job = db.query(Job).filter(Job.id == id, Job.user_id == user.id).first()
     if job is None:
         raise HTTPException(status_code=404, detail="Job not found")
+
+    if not check_and_set_cooldown(user.id, id, "generate_cv"):
+        raise HTTPException(status_code=429, detail="Please wait before retrying CV generation")
 
     r.xadd(
         name="jobs_stream",
