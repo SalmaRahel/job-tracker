@@ -1,4 +1,5 @@
 import json
+import logging
 from ..gemini import call_gemini
 from .schemas import JDExtraction, MatchingOutput
 from ..profile.schemas import ProfileResponse
@@ -9,6 +10,8 @@ from ..profile.models import Profile
 from .models import MatchResult
 from ..database import SessionLocal
 from ..background_jobs.redis_client import r
+
+logger = logging.getLogger(__name__)
 
 def extract_jd(job_description: str) -> JDExtraction:
     prompt = f"""Extract info from this job description as JSON with these exact keys:
@@ -101,7 +104,7 @@ def analyze_job(job_id: int, db: Session):
         payload = json.dumps({"user_id": job.user_id, "message": f"matching score is ready for user: {job.user_id}, job_id: {job.id}"})
         r.publish("notification", payload)
     except Exception:
-        pass
+        logger.exception("Failed to publish match result notification for job_id=%s", job.id)
     return match_result
 
 

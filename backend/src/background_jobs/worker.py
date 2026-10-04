@@ -1,9 +1,12 @@
+import logging
 from .redis_client import r
 from ..matching.service import run_analysis
 from ..cv_generation.service import run_cv_generation
 import redis
 
 import src.models  # noqa: F401
+
+logger = logging.getLogger(__name__)
 
 try:
     r.xgroup_create(name="jobs_stream", groupname="workers", id="0", mkstream=True)
@@ -21,11 +24,16 @@ while True:
     )
     for stream_name, entries in messages:
         for message_id, fields in entries:
-            job_type = fields["job_type"]
-            job_id = int(fields["job_id"])
-            if job_type == "matching":
-                run_analysis(job_id)
-            elif job_type == "cv_generation":
-                palette_name = fields.get("palette_name") or None
-                run_cv_generation(job_id, palette_name)
+            job_type = None
+            job_id = None
+            try:
+                job_type = fields["job_type"]
+                job_id = int(fields["job_id"])
+                if job_type == "matching":
+                    run_analysis(job_id)
+                elif job_type == "cv_generation":
+                    palette_name = fields.get("palette_name") or None
+                    run_cv_generation(job_id, palette_name)
+            except Exception:
+                logger.exception("Failed to process %s message_id=%s job_id=%s", job_type, message_id, job_id)
             r.xack("jobs_stream", "workers", message_id)

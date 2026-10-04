@@ -5,7 +5,7 @@ from ..auth.models import User
 from ..jobs.models import Job
 from ..auth.dependencies import get_current_user
 
-from ..background_jobs.redis_client import r
+from ..background_jobs.redis_client import r, check_and_set_cooldown
 
 router = APIRouter(prefix="/jobs", tags=["jd-analysis"])
 
@@ -14,6 +14,9 @@ def jd_analysis(id: int, db: Session=Depends(get_db), user: User=Depends(get_cur
     job = db.query(Job).filter(Job.id == id, Job.user_id == user.id).first()
     if job is None:
         raise HTTPException(status_code = 404, detail = "Job not found")
+
+    if not check_and_set_cooldown(user.id, id, "analyze"):
+        raise HTTPException(status_code=429, detail="Please wait before retrying analysis")
 
     r.xadd(
         name="jobs_stream",
