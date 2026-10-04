@@ -1,30 +1,23 @@
 #dependencies
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPAuthorizationCredentials 
-import jwt
 from sqlalchemy.orm import Session
 from ..database import get_db
 from .models import User
-from src.config import settings
 from fastapi.security import HTTPBearer
-
-ALGORITHM = "HS256"
+from .security import decode_access_token, InvalidTokenError
 
 
 
 http_bearer = HTTPBearer()
 
-def get_current_user(credentials: HTTPAuthorizationCredentials  = Depends(http_bearer), db: Session = Depends(get_db)):
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(http_bearer), db: Session = Depends(get_db)):
     try:
-        payload = jwt.decode(credentials.credentials, settings.secret_key, algorithms=[ALGORITHM])
-    except jwt.InvalidTokenError:
+        user_id = decode_access_token(credentials.credentials)
+    except InvalidTokenError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid Token error")
-    
-    user_id = payload.get("sub")
-    if user_id is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="authentification failed")
-    
-    user= db.query(User).filter(User.id == user_id).first()
+
+    user = db.query(User).filter(User.id == user_id).first()
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="account deleted after the token was issued")
     return user
