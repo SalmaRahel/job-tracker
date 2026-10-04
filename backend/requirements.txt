@@ -28,3 +28,6 @@ typing_extensions==4.15.0
 uvicorn==0.49.0
 pydantic-settings==2.14.2
 google-genai==2.19.0
+sqlglot==30.21.0
+pytest==9.1.1
+httpx==0.28.1
