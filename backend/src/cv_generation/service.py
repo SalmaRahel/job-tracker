@@ -14,6 +14,7 @@ from ..jobs.models import Job
 from ..database import SessionLocal
 from .models import CVGeneration
 from .utils import compute_idempotency_key
+from ..background_jobs.redis_client import r
 
 s3_client = boto3.client("s3")
 
@@ -143,6 +144,12 @@ def cv_generation(id: int, palette_name: str, db: Session):
     new_cv = CVGeneration(key=key, job_id=id, s3_key=s3_key)
     db.add(new_cv)
     db.commit()
+
+    try:
+        payload = json.dumps({"user_id": job.user_id, "message": f"cv generated for user: {job.user_id}, job_id: {job.id}"})
+        r.publish("notification", payload)
+    except Exception:
+        pass
 
     return CVDownloadKeyResponse(s3_key=s3_key)
 
