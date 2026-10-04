@@ -10,9 +10,10 @@ class Settings(BaseSettings):
     cors_allowed_origins: str = ""
     action_cooldown_seconds: int = 45
     readonly_database_url: str = ""
-    job_search_ro_password: str = ""  # only read by the Alembic migration
+    job_search_ro_password: str = ""
     job_search_statement_timeout_seconds: int = 3
     job_search_max_rows: int = 50
+    job_search_cooldown_seconds: int = 5
     model_config = SettingsConfigDict(env_file=".env")
 
     @property
