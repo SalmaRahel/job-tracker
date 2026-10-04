@@ -8,6 +8,7 @@ from ..jobs.models import Job
 from ..profile.models import Profile
 from .models import MatchResult
 from ..database import SessionLocal
+from ..background_jobs.redis_client import r
 
 def extract_jd(job_description: str) -> JDExtraction:
     prompt = f"""Extract info from this job description as JSON with these exact keys:
@@ -96,6 +97,11 @@ def analyze_job(job_id: int, db: Session):
     db.add(match_result)
     db.commit()
     db.refresh(match_result)
+    try:
+        payload = json.dumps({"user_id": job.user_id, "message": f"matching score is ready for user: {job.user_id}, job_id: {job.id}"})
+        r.publish("notification", payload)
+    except Exception:
+        pass
     return match_result
 
 

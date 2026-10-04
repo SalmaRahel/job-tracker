@@ -1,9 +1,15 @@
 from .redis_client import r
 from ..matching.service import run_analysis
 from ..cv_generation.service import run_cv_generation
+import redis
 
+import src.models  # noqa: F401
 
-r.xgroup_create(name="jobs_stream", groupname="workers", id="0", mkstream=True)
+try:
+    r.xgroup_create(name="jobs_stream", groupname="workers", id="0", mkstream=True)
+except redis.exceptions.ResponseError as e:
+    if "BUSYGROUP" not in str(e):
+        raise
 
 while True:
     messages = r.xreadgroup(
