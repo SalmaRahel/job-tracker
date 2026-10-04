@@ -1,9 +1,10 @@
 import asyncio
 import redis.asyncio as redis
 from .connections import send_notification
+from ..config import settings
 import json
 async def listen_for_notifications():
-    client = redis.Redis(host="localhost", port=6379, decode_responses=True)
+    client = redis.Redis.from_url(settings.redis_url, decode_responses=True)
     pubsub = client.pubsub()
     await pubsub.subscribe("notification")
     async for message in pubsub.listen():
