@@ -22,6 +22,10 @@ TEST_DATABASE_URL = _test_url.render_as_string(hide_password=False)
 # Safety: tests may only ever run against a database whose name ends in "_test".
 assert _test_url.database.endswith("_test")
 os.environ["DATABASE_URL"] = TEST_DATABASE_URL
+# The read-only connection must also point at the test DB.
+os.environ["READONLY_DATABASE_URL"] = (
+    make_url(os.environ["READONLY_DATABASE_URL"]).set(database=TEST_DB_NAME).render_as_string(hide_password=False)
+)
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
