@@ -11,6 +11,7 @@ from src.matching.router import router as jd_analysis_router
 from src.notifications.router import router as notifications_router
 from src.notifications.subscriber import listen_for_notifications  
 from src.cv_generation.router import router as cv_generation_router
+from src.job_search_query.router import router as job_search_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -38,3 +39,4 @@ app.include_router(profile_router)
 app.include_router(jd_analysis_router)
 app.include_router(notifications_router)
 app.include_router(cv_generation_router)
+app.include_router(job_search_router)
