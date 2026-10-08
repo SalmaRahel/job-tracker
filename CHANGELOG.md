@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.8.0]
 
 ### Added
 - Ask your job search: POST /job-search/ask turns a plain-English question into a checked, read-only SQL query and returns a short answer.
