@@ -18,7 +18,7 @@ export default function JobFormPage({ job, onCancel, onSave }: { job?: Job; onCa
     if (form.deadline && form.applicationDate && form.deadline < form.applicationDate) next.deadline = "Deadline cannot be before the application date.";
     setErrors(next);
     if (Object.keys(next).length) return;
-    onSave({ id: job?.id ?? Date.now(), ...form, mark: form.company.charAt(0).toUpperCase(), color: job?.color ?? "bg-[#f5b8d2] text-[#171714]", deadlineLabel: form.deadline ? new Date(`${form.deadline}T12:00:00`).toLocaleDateString("en-GB", { month: "short", day: "2-digit" }) : "No date", workplace: "Remote" });
+    onSave({ id: job?.id ?? Date.now(), ...form, mark: form.company.charAt(0).toUpperCase(), color: job?.color ?? "bg-[#f5b8d2] text-[#171714]", deadlineLabel: form.deadline ? new Date(`${form.deadline}T12:00:00`).toLocaleDateString("en-GB", { month: "short", day: "2-digit" }) : "No date" });
   };
   return (
     <section className="px-5 pb-28 pt-8 md:px-8 lg:px-10">

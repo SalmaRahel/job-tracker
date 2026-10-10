@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import { useAuth } from "./AuthContext";
 import {
   floatingQuestions,
   landingFeatures,
@@ -58,16 +59,35 @@ function AuthDialog({
   mode,
   onClose,
   onModeChange,
+  onAuthenticated,
 }: {
   mode: Exclude<AuthMode, null>;
   onClose: () => void;
   onModeChange: (mode: Exclude<AuthMode, null>) => void;
+  onAuthenticated: () => void;
 }) {
-  const [submitted, setSubmitted] = useState(false);
+  const { login, register } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    setSubmitted(false);
+    setError("");
   }, [mode]);
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    setLoading(true);
+    setError("");
+    try {
+      await (mode === "login" ? login : register)(email, password);
+      onAuthenticated();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+      setLoading(false);
+    }
+  };
 
   return (
     <div
@@ -103,19 +123,6 @@ function AuthDialog({
             Register
           </button>
         </div>
-        {submitted ? (
-          <div className="py-8 text-center">
-            <span className="mx-auto mb-5 grid h-16 w-16 place-items-center rounded-full bg-[#c8f04b] text-2xl">
-              <SparkIcon />
-            </span>
-            <h2 className="font-display text-4xl font-semibold tracking-[-0.04em]">
-              You&apos;re on your way.
-            </h2>
-            <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-[#626258]">
-              This is a design preview. Your real account flow can connect here later.
-            </p>
-          </div>
-        ) : (
           <>
             <p className="mb-2 text-xs font-extrabold uppercase tracking-[0.18em] text-[#ff6b4a]">
               {mode === "login" ? "Welcome back" : "Start your search"}
@@ -128,10 +135,7 @@ function AuthDialog({
             </h2>
             <form
               className="mt-7 space-y-4"
-              onSubmit={(event) => {
-                event.preventDefault();
-                setSubmitted(true);
-              }}
+              onSubmit={submit}
             >
               <label className="block text-sm font-bold">
                 Email
@@ -140,6 +144,8 @@ function AuthDialog({
                   placeholder="you@example.com"
                   required
                   type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
                 />
               </label>
               <label className="block text-sm font-bold">
@@ -149,26 +155,29 @@ function AuthDialog({
                   placeholder="At least 8 characters"
                   required
                   type="password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
                 />
               </label>
-              <button className="group flex w-full items-center justify-center gap-2 rounded-full bg-[#3559e0] px-5 py-4 font-extrabold text-white transition hover:bg-[#2444c4]">
-                {mode === "login" ? "Login to your workspace" : "Create my free account"}
+              {error && <p className="text-sm font-bold text-[#c53f2b]">{error}</p>}
+              <button
+                className="group flex w-full items-center justify-center gap-2 rounded-full bg-[#3559e0] px-5 py-4 font-extrabold text-white transition hover:bg-[#2444c4] disabled:opacity-60"
+                disabled={loading}
+              >
+                {loading ? "Please wait..." : mode === "login" ? "Login to your workspace" : "Create my free account"}
                 <span className="transition-transform group-hover:translate-x-1">
                   <ArrowIcon />
                 </span>
               </button>
             </form>
-            <p className="mt-5 text-center text-xs leading-5 text-[#77776d]">
-              Design demo only. No information is saved or sent.
-            </p>
           </>
-        )}
+
       </section>
     </div>
   );
 }
 
-export default function LandingPage() {
+export default function LandingPage({ onAuthenticated }: { onAuthenticated: () => void }) {
   const [authMode, setAuthMode] = useState<AuthMode>(null);
   const [questionIndex, setQuestionIndex] = useState(0);
 
@@ -470,6 +479,7 @@ export default function LandingPage() {
           mode={authMode}
           onClose={() => setAuthMode(null)}
           onModeChange={setAuthMode}
+          onAuthenticated={onAuthenticated}
         />
       )}
     </main>

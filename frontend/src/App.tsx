@@ -6,11 +6,13 @@ import JobDetailPage from "./features/jobs/JobDetailPage";
 import JobFormPage from "./features/jobs/JobFormPage";
 import JobsListPage from "./features/jobs/JobsListPage";
 import ProfilePage from "./features/profile/ProfilePage";
+import { useAuth } from "./features/auth/AuthContext";
 import AppShell from "./shared/components/AppShell";
 import { jobs as initialJobs, profile as initialProfile, type Job, type Profile } from "./shared/data/mockData";
 import type { AppPage } from "./shared/types";
 
 export default function App() {
+  const { isLoggedIn, logout } = useAuth();
   const [page, setPage] = useState<AppPage>("dashboard");
   const [jobs, setJobs] = useState<Job[]>([]);
   const [profile, setProfile] = useState<Profile | null>(initialProfile);
@@ -31,7 +33,7 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  if (page === "landing") return <LandingPage />;
+  if (!isLoggedIn || page === "landing") return <LandingPage onAuthenticated={() => navigate("jobs")} />;
 
   if (expired) {
     return (
@@ -65,7 +67,7 @@ export default function App() {
   else content = <FriendlyError onBack={() => navigate("jobs")} />;
 
   return (
-    <AppShell page={page} navigate={navigate} onLanding={() => navigate("landing")} onExpire={() => setExpired(true)}>
+    <AppShell page={page} navigate={navigate} onLanding={() => navigate("landing")} onExpire={() => { logout(); setPage("landing"); }}>
       {content}
     </AppShell>
   );

@@ -72,7 +72,6 @@ export type Job = {
   company: string;
   position: string;
   location: string;
-  workplace: "Remote" | "Hybrid" | "On-site";
   status: JobStatus;
   deadline: string;
   deadlineLabel: string;
@@ -89,7 +88,6 @@ export const jobs: Job[] = [
     company: "Luma Labs",
     position: "Product Designer",
     location: "London, UK",
-    workplace: "Hybrid",
     status: "Final Interview",
     deadline: "2025-04-24",
     deadlineLabel: "Apr 24",
@@ -104,7 +102,6 @@ export const jobs: Job[] = [
     company: "Northstar",
     position: "UX Research Intern",
     location: "Remote",
-    workplace: "Remote",
     status: "Interview",
     deadline: "2025-04-28",
     deadlineLabel: "Apr 28",
@@ -119,7 +116,6 @@ export const jobs: Job[] = [
     company: "Morrow",
     position: "Junior Product Manager",
     location: "Manchester, UK",
-    workplace: "On-site",
     status: "Applied",
     deadline: "2025-05-03",
     deadlineLabel: "May 03",
@@ -134,7 +130,6 @@ export const jobs: Job[] = [
     company: "Patchwork",
     position: "Graduate Software Engineer",
     location: "Bristol, UK",
-    workplace: "Hybrid",
     status: "Online Assessment",
     deadline: "2025-05-08",
     deadlineLabel: "May 08",
@@ -149,7 +144,6 @@ export const jobs: Job[] = [
     company: "Form & Field",
     position: "Brand Design Intern",
     location: "Remote",
-    workplace: "Remote",
     status: "Saved",
     deadline: "2025-05-12",
     deadlineLabel: "May 12",
@@ -164,7 +158,6 @@ export const jobs: Job[] = [
     company: "Brightside",
     position: "Marketing Associate",
     location: "Leeds, UK",
-    workplace: "On-site",
     status: "Offer",
     deadline: "2025-05-16",
     deadlineLabel: "May 16",
@@ -179,7 +172,6 @@ export const jobs: Job[] = [
     company: "Common Ground",
     position: "Community Coordinator",
     location: "Edinburgh, UK",
-    workplace: "Hybrid",
     status: "Rejected",
     deadline: "2025-04-18",
     deadlineLabel: "Apr 18",
@@ -202,7 +194,7 @@ export const jobStatuses: JobStatus[] = [
   "Withdrawn",
 ];
 
-export type ProfileItem = Record<string, string> & { id: number };
+export type ProfileItem = { id: number; [key: string]: string | number };
 
 export type Profile = {
   personal: {
