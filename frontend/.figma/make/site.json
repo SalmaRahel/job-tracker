@@ -1,0 +1,11 @@
+{
+  "title": "version1",
+  "description": "Manage your job search efficiently by tracking applications, analyzing job matches, generating tailored CVs, and getting AI-powered insights.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
