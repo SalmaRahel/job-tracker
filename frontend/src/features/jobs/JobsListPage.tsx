@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "../../shared/components/AppShell";
-import ConfirmDeleteDialog from "./ConfirmDeleteDialog";
+import ConfirmDialog from "../../shared/components/ConfirmDialog";
 import { jobStatuses, type Job, type JobStatus } from "../../shared/data/mockData";
 
 const statusStyles: Record<JobStatus, string> = {
@@ -89,7 +89,7 @@ export default function JobsListPage({
         </div>
         {hasMore && !loading && <button className="mx-auto mt-6 block rounded-full bg-[#171714] px-5 py-3 text-sm font-bold text-white" onClick={onLoadMore}>Load more</button>}
       </div>
-      {pending && <ConfirmDeleteDialog job={pending} onCancel={() => setPending(null)} onConfirm={() => { onDelete(pending.id); setPending(null); }} />}
+      {pending && <ConfirmDialog title="Delete this job?" text={`${pending.position} at ${pending.company} will be removed permanently.`} onCancel={() => setPending(null)} onConfirm={() => { onDelete(pending.id); setPending(null); }} />}
     </section>
   );
 }

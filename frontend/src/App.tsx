@@ -8,15 +8,16 @@ import JobsListPage from "./features/jobs/JobsListPage";
 import ProfilePage from "./features/profile/ProfilePage";
 import { useAuth } from "./features/auth/AuthContext";
 import { useJobs } from "./features/jobs/useJobs";
+import { useProfile } from "./features/profile/useProfile";
 import AppShell from "./shared/components/AppShell";
-import { jobs as mockJobs, profile as initialProfile, type Job, type Profile } from "./shared/data/mockData";
+import { jobs as mockJobs, type Job } from "./shared/data/mockData";
 import type { AppPage } from "./shared/types";
 
 export default function App() {
-  const { isLoggedIn, logout } = useAuth();
+  const { isLoggedIn, email, logout } = useAuth();
   const [page, setPage] = useState<AppPage>("dashboard");
   const store = useJobs(isLoggedIn);
-  const [profile, setProfile] = useState<Profile | null>(initialProfile);
+  const profileStore = useProfile(isLoggedIn, email ?? "");
   const [expired, setExpired] = useState(false);
 
   const [notice, setNotice] = useState("");
@@ -68,9 +69,9 @@ export default function App() {
   else if (page === "job-create") content = <JobFormPage onCancel={() => navigate("jobs")} onSave={saveJob} />;
   else if ((page === "job-edit" || page === "job-detail") && store.selecting) content = <JobSkeleton />;
   else if (page === "job-edit" && selectedJob) content = <JobFormPage job={selectedJob} onCancel={() => navigate("job-detail")} onSave={saveJob} />;
-  else if (page === "job-detail" && selectedJob) content = <JobDetailPage job={selectedJob} profile={profile} onBack={() => navigate("jobs")} onEdit={() => navigate("job-edit")} onProfile={() => navigate("profile")} onStatus={(status) => attempt(() => store.setStatus(selectedJob.id, status))} />;
+  else if (page === "job-detail" && selectedJob) content = <JobDetailPage job={selectedJob} profile={profileStore.profile} onBack={() => navigate("jobs")} onEdit={() => navigate("job-edit")} onProfile={() => navigate("profile")} onStatus={(status) => attempt(() => store.setStatus(selectedJob.id, status))} />;
   else if (page === "ask") content = <AskPage />;
-  else if (page === "profile") content = <ProfilePage profile={profile} setProfile={setProfile} />;
+  else if (page === "profile") content = <ProfilePage store={profileStore} />;
   else content = <FriendlyError onBack={() => navigate("jobs")} />;
 
   return (

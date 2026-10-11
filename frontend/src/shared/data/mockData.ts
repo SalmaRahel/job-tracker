@@ -211,50 +211,6 @@ export type Profile = {
   links: ProfileItem[];
 };
 
-export const profile: Profile = {
-  personal: {
-    fullName: "Alex Morgan",
-    email: "alex.morgan@example.com",
-    phone: "+44 7700 900 321",
-    city: "London, UK",
-  },
-  skills: ["Figma", "User research", "Prototyping", "Design systems", "TypeScript"],
-  experience: [
-    {
-      id: 1,
-      title: "Product Design Intern",
-      company: "Studio North",
-      duration: "Jun 2024 – Sep 2024",
-      description: "Designed and tested onboarding improvements for a collaborative planning tool.",
-    },
-  ],
-  education: [
-    {
-      id: 1,
-      school: "University of Bristol",
-      degree: "BSc",
-      field: "Digital Product Design",
-      year: "2025",
-    },
-  ],
-  projects: [
-    {
-      id: 1,
-      name: "Campus Compass",
-      description: "A mobile wayfinding concept tested with 18 students.",
-      techStack: "Figma, React, Mapbox",
-      link: "https://example.com/campus-compass",
-    },
-  ],
-  certifications: [
-    { id: 1, name: "UX Design Professional", issuer: "Google", year: "2024" },
-  ],
-  links: [
-    { id: 1, label: "Portfolio", url: "https://example.com/alex" },
-    { id: 2, label: "LinkedIn", url: "https://linkedin.com" },
-  ],
-};
-
 export const exampleQuestions = [
   "Which remote jobs did I apply to?",
   "How many applications per status?",
