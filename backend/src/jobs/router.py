@@ -1,14 +1,14 @@
-from fastapi import  Depends, HTTPException, Response, APIRouter # The main FastAPI class — creates the app object
+from fastapi import Depends, HTTPException, Query, Response, APIRouter # The main FastAPI class — creates the app object
 from .models import ApplicationStatus, Job  # ORM model (Job) + enum (ApplicationStatus)
 from ..auth.models import User
 from ..database import get_db                  # Session factory — call SessionLocal() to get a DB session
 from ..auth.dependencies import get_current_user
+from .search import search_filter
 from .schemas import JobCreate, JobResponse, JobUpdate, JobPage
 from sqlalchemy.orm import Session
 from typing import Optional
 from datetime import  datetime
 from sqlalchemy import select, or_, and_
-from sqlalchemy import func
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
@@ -33,7 +33,7 @@ def create_jobs(inter: JobCreate, db: Session=Depends(get_db), user: User=Depend
 
 
 @router.get("/", response_model=JobPage)
-def get_jobs(db: Session=Depends(get_db), user: User=Depends(get_current_user), last_seen_created_at: Optional[datetime] = None, last_seen_id: Optional[int] = None, search: Optional[str] = None):
+def get_jobs(db: Session=Depends(get_db), user: User=Depends(get_current_user), last_seen_created_at: Optional[datetime] = None, last_seen_id: Optional[int] = None, search: Optional[str] = Query(default=None, max_length=100)):
     """Returns one page of jobs. On the first page, don't send cursor params."""
     LIMIT=20
     stmt = (
@@ -54,8 +54,9 @@ def get_jobs(db: Session=Depends(get_db), user: User=Depends(get_current_user), 
     else:
         raise HTTPException(status_code = 400, detail = "both cursor params required together, or neither.")
 
-    if search is not None:
-        stmt = stmt.where(Job.search_vector.op("@@")(func.websearch_to_tsquery('english', search)))
+    condition = search_filter(search) if search is not None else None
+    if condition is not None:
+        stmt = stmt.where(condition)
     rows = db.execute(stmt).scalars().all()
 
     has_more = len(rows) > LIMIT
