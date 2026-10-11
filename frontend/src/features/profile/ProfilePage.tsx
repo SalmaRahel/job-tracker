@@ -4,6 +4,7 @@ import ConfirmDialog from "../../shared/components/ConfirmDialog";
 import type { Section } from "../../shared/api/profileApi";
 import type { Profile, ProfileItem } from "../../shared/data/mockData";
 import type { ProfileStore } from "./useProfile";
+import { isValidEmail, isValidPhone } from "../../shared/validation";
 
 const messageOf = (err: unknown) => (err instanceof Error ? err.message : "Something went wrong");
 
@@ -91,5 +92,14 @@ function ItemModal({ section, item, onClose, onSave }: { section: Section; item?
 
 function PersonalForm({ personal, onCancel, onSave }: { personal: Profile["personal"]; onCancel: () => void; onSave: (personal: Profile["personal"]) => void }) {
   const [form, setForm] = useState(personal);
-  return <form onSubmit={(event) => { event.preventDefault(); onSave(form); }}><div className="grid gap-4 sm:grid-cols-2">{([["fullName", "Full name"], ["email", "Email"], ["phone", "Phone"], ["city", "City"]] as const).map(([key, label]) => <label className="text-xs font-bold" key={key}>{label}<input className="mt-2 w-full rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-semibold text-white outline-none placeholder:text-white/40" value={form[key]} onChange={(event) => setForm({ ...form, [key]: event.target.value })} /></label>)}</div><div className="mt-5 flex justify-end gap-2"><button className="rounded-full px-4 py-2 text-xs font-bold" type="button" onClick={onCancel}>Cancel</button><button className="rounded-full bg-white px-5 py-2.5 text-xs font-bold text-[#171714]">Save details</button></div></form>;
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    const next: Record<string, string> = {};
+    if (!isValidEmail(form.email)) next.email = "Enter a valid email address";
+    if (!isValidPhone(form.phone)) next.phone = "Enter a valid phone number";
+    setErrors(next);
+    if (Object.keys(next).length === 0) onSave({ ...form, email: form.email.trim(), phone: form.phone.trim() });
+  };
+  return <form onSubmit={submit}><div className="grid gap-4 sm:grid-cols-2">{([["fullName", "Full name"], ["email", "Email"], ["phone", "Phone"], ["city", "City"]] as const).map(([key, label]) => <label className="text-xs font-bold" key={key}>{label}<input className={`mt-2 w-full rounded-xl border bg-white/10 px-4 py-3 text-sm font-semibold text-white outline-none placeholder:text-white/40 ${errors[key] ? "border-[#ffb3a3]" : "border-white/20"}`} value={form[key]} onChange={(event) => { setForm({ ...form, [key]: event.target.value }); setErrors({ ...errors, [key]: "" }); }} />{errors[key] && <span className="mt-2 block text-xs font-bold text-[#ffb3a3]">{errors[key]}</span>}</label>)}</div><div className="mt-5 flex justify-end gap-2"><button className="rounded-full px-4 py-2 text-xs font-bold" type="button" onClick={onCancel}>Cancel</button><button className="rounded-full bg-white px-5 py-2.5 text-xs font-bold text-[#171714]">Save details</button></div></form>;
 }

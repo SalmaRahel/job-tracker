@@ -1,5 +1,21 @@
-from pydantic import BaseModel, EmailStr, model_validator
+import re
+from pydantic import BaseModel, EmailStr, field_validator, model_validator
+from pydantic_core import PydanticCustomError
 from typing import Optional
+
+PHONE_PATTERN = re.compile(r"^\+?[0-9\s\-.()]+$")
+
+
+def clean_phone(value: str | None) -> str | None:
+    if value is None:
+        return None
+    value = value.strip()
+    if not value:
+        return None
+    digits = sum(char in "0123456789" for char in value)
+    if not PHONE_PATTERN.match(value) or not 8 <= digits <= 15:
+        raise PydanticCustomError("phone", "Enter a valid phone number")
+    return value
 
 class SkillCreate(BaseModel):
     name: str
@@ -50,6 +66,11 @@ class ProfileCreate(BaseModel):
     links_json: list[LinkItem] | None = None
     languages_json: list[str] | None = None
 
+    @field_validator("phone")
+    @classmethod
+    def check_phone(cls, value):
+        return clean_phone(value)
+
     @model_validator(mode="after")
     def check_not_empty(self):
         if not (self.experience_json or self.education_json or self.projects_json):
@@ -85,3 +106,8 @@ class ProfileUpdate(BaseModel):
     education_json: Optional[list[EducationItem]] = None
     links_json: Optional[list[LinkItem]] = None
     languages_json: Optional[list[str]] = None
+
+    @field_validator("phone")
+    @classmethod
+    def check_phone(cls, value):
+        return clean_phone(value)
