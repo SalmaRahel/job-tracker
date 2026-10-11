@@ -1,17 +1,18 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import date, datetime
 from .models import ApplicationStatus
 
 
 class JobCreate(BaseModel):
-    company_name: str
-    position: str
-    location: str
+    company_name: str = Field(max_length=100)
+    position: str = Field(max_length=150)
+    location: str = Field(max_length=50)
     application_date: Optional[date] = None
     deadline: Optional[date] = None
-    job_link: Optional[str] = None
+    job_link: Optional[str] = Field(default=None, max_length=250)
     job_description: Optional[str] = None
+    status: ApplicationStatus = ApplicationStatus.SAVED
 
 
 class JobResponse(BaseModel):
@@ -42,11 +43,11 @@ class JobPage(BaseModel):
 
 
 class JobUpdate(BaseModel):
-    company_name: Optional[str] = None
-    position: Optional[str] = None
-    location: Optional[str] = None
+    company_name: Optional[str] = Field(default=None, max_length=100)
+    position: Optional[str] = Field(default=None, max_length=150)
+    location: Optional[str] = Field(default=None, max_length=50)
     application_date: Optional[date] = None
     deadline: Optional[date] = None
-    job_link: Optional[str] = None
+    job_link: Optional[str] = Field(default=None, max_length=250)
     status: Optional[ApplicationStatus] = None
     job_description: Optional[str] = None

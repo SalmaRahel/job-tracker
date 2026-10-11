@@ -12,7 +12,7 @@ from sqlalchemy import func
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
-@router.post("/", status_code=201)
+@router.post("/", status_code=201, response_model=JobResponse)
 def create_jobs(inter: JobCreate, db: Session=Depends(get_db), user: User=Depends(get_current_user)):
     new_job = Job(
         company_name     = inter.company_name,
@@ -22,7 +22,7 @@ def create_jobs(inter: JobCreate, db: Session=Depends(get_db), user: User=Depend
         deadline         = inter.deadline,
         job_link         = inter.job_link,
         job_description            = inter.job_description,
-        status           = ApplicationStatus.SAVED,
+        status           = inter.status,
         user_id          = user.id
     )
 
