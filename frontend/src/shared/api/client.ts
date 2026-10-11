@@ -1,4 +1,5 @@
 const TOKEN_KEY = "token";
+const EMAIL_KEY = "email";
 const BASE_URL = import.meta.env.VITE_API_URL as string;
 
 export class ApiError extends Error {
@@ -13,7 +14,12 @@ let onUnauthorized: () => void = () => {};
 
 export const getToken = () => localStorage.getItem(TOKEN_KEY);
 export const setToken = (token: string) => localStorage.setItem(TOKEN_KEY, token);
-export const clearToken = () => localStorage.removeItem(TOKEN_KEY);
+export const clearToken = () => {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(EMAIL_KEY);
+};
+export const getEmail = () => localStorage.getItem(EMAIL_KEY);
+export const setEmail = (email: string) => localStorage.setItem(EMAIL_KEY, email);
 export const setUnauthorizedHandler = (handler: () => void) => {
   onUnauthorized = handler;
 };

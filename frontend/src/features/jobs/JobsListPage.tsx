@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Icon } from "../../shared/components/AppShell";
 import { jobStatuses, type Job, type JobStatus } from "../../shared/data/mockData";
 
@@ -16,6 +16,10 @@ const statusStyles: Record<JobStatus, string> = {
 export default function JobsListPage({
   jobs,
   loading,
+  error,
+  hasMore,
+  onSearch,
+  onLoadMore,
   onAdd,
   onOpen,
   onEdit,
@@ -23,6 +27,10 @@ export default function JobsListPage({
 }: {
   jobs: Job[];
   loading: boolean;
+  error: string;
+  hasMore: boolean;
+  onSearch: (query: string) => void;
+  onLoadMore: () => void;
   onAdd: () => void;
   onOpen: (id: number) => void;
   onEdit: (id: number) => void;
@@ -31,7 +39,12 @@ export default function JobsListPage({
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<"All" | JobStatus>("All");
   const [menu, setMenu] = useState<number | null>(null);
-  const filtered = useMemo(() => jobs.filter((job) => (status === "All" || job.status === status) && `${job.company} ${job.position} ${job.location}`.toLowerCase().includes(query.toLowerCase())), [jobs, query, status]);
+  const filtered = useMemo(() => jobs.filter((job) => status === "All" || job.status === status), [jobs, status]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => onSearch(query.trim()), 300);
+    return () => window.clearTimeout(timer);
+  }, [query, onSearch]);
 
   return (
     <section className="px-5 pb-28 pt-10 md:px-8 lg:px-10 lg:pt-14">
@@ -49,12 +62,13 @@ export default function JobsListPage({
           <input className="h-14 min-w-0 flex-1 bg-transparent text-sm font-semibold outline-none" placeholder="Search by role, company or location..." value={query} onChange={(event) => setQuery(event.target.value)} />
           {query && <button className="text-xs font-bold text-[#77776d]" onClick={() => setQuery("")}>Clear</button>}
         </div>
+        {error && <p className="mt-4 text-sm font-bold text-[#c53f2b]">{error}</p>}
         <div className="mt-4 flex gap-2 overflow-x-auto pb-2">
           {(["All", ...jobStatuses] as const).map((item) => <button className={`shrink-0 rounded-full border px-4 py-2 text-xs font-bold ${status === item ? "border-[#171714] bg-[#171714] text-white" : "border-[#171714]/15 bg-white text-[#6e6e65]"}`} key={item} onClick={() => setStatus(item)}>{item}</button>)}
         </div>
         <div className="mt-6 overflow-visible rounded-[26px] border border-[#171714]/15 bg-white shadow-[0_10px_40px_rgba(23,23,20,.04)]">
           <div className="hidden grid-cols-[1.5fr_1fr_1fr_.7fr_auto] gap-4 border-b border-[#171714]/10 bg-[#fffaf0] px-7 py-3 text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#838379] lg:grid"><span>Company & role</span><span>Status</span><span>Location</span><span>Deadline</span><span className="w-9" /></div>
-          {loading ? Array.from({ length: 5 }).map((_, index) => <div className="flex animate-pulse items-center gap-4 border-b border-[#171714]/10 p-5" key={index}><span className="h-12 w-12 rounded-2xl bg-[#e9e5da]" /><span className="h-3 w-48 rounded bg-[#e9e5da]" /></div>) : jobs.length === 0 ? (
+          {loading ? Array.from({ length: 5 }).map((_, index) => <div className="flex animate-pulse items-center gap-4 border-b border-[#171714]/10 p-5" key={index}><span className="h-12 w-12 rounded-2xl bg-[#e9e5da]" /><span className="h-3 w-48 rounded bg-[#e9e5da]" /></div>) : jobs.length === 0 && !query ? (
             <div className="px-6 py-20 text-center"><span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[#f5b8d2]"><Icon name="briefcase" /></span><h2 className="mt-6 font-display text-3xl font-semibold">No jobs yet.</h2><p className="mt-2 text-sm font-medium text-[#77776d]">Add your first one and start building momentum.</p><button className="mt-6 rounded-full bg-[#ff6b4a] px-5 py-3 text-sm font-bold text-white" onClick={onAdd}>Add a job</button></div>
           ) : filtered.length === 0 ? (
             <div className="px-6 py-20 text-center"><h2 className="font-display text-3xl font-semibold">No jobs found</h2><p className="mt-2 text-sm text-[#77776d]">Try another search or clear your filters.</p><button className="mt-5 rounded-full bg-[#171714] px-5 py-3 text-sm font-bold text-white" onClick={() => { setQuery(""); setStatus("All"); }}>Clear filters</button></div>
@@ -71,6 +85,7 @@ export default function JobsListPage({
             </article>
           ))}
         </div>
+        {hasMore && !loading && <button className="mx-auto mt-6 block rounded-full bg-[#171714] px-5 py-3 text-sm font-bold text-white" onClick={onLoadMore}>Load more</button>}
       </div>
     </section>
   );

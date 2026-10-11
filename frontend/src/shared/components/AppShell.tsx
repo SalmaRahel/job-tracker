@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import { useAuth } from "../../features/auth/AuthContext";
 import type { AppPage } from "../types";
 
 export type IconName =
@@ -50,6 +51,12 @@ const navItems: Array<{ page: AppPage; label: string; icon: IconName }> = [
   { page: "profile", label: "Profile", icon: "user" },
 ];
 
+const initialsOf = (email: string) => {
+  const name = email.split("@")[0].replace(/[^a-zA-Z0-9]+/g, " ").trim().split(" ");
+  const letters = name.length > 1 ? name[0][0] + name[1][0] : name[0].slice(0, 2);
+  return letters.toUpperCase();
+};
+
 export default function AppShell({
   page,
   navigate,
@@ -64,6 +71,7 @@ export default function AppShell({
   children: ReactNode;
 }) {
   const [accountOpen, setAccountOpen] = useState(false);
+  const email = useAuth().email ?? "";
   const active = page.startsWith("job-") ? "jobs" : page;
   return (
     <main className="min-h-screen bg-[#f5f1e8] text-[#171714]">
@@ -81,12 +89,11 @@ export default function AppShell({
               <span className="text-[#3559e0]"><Icon name="spark" className="h-4 w-4" /></span>
               Ask AI
             </button>
-            <button className="grid h-10 w-10 place-items-center rounded-full bg-[#171714] text-xs font-extrabold text-white" onClick={() => setAccountOpen((open) => !open)}>AM</button>
+            <button className="grid h-10 w-10 place-items-center rounded-full bg-[#171714] text-xs font-extrabold text-white" onClick={() => setAccountOpen((open) => !open)}>{initialsOf(email) || "?"}</button>
             {accountOpen && (
               <div className="absolute right-0 top-12 w-56 rounded-2xl border border-[#171714]/10 bg-white p-2 shadow-[0_15px_45px_rgba(23,23,20,.15)]">
                 <div className="border-b border-[#171714]/10 px-3 py-3">
-                  <p className="text-xs font-extrabold">Alex Morgan</p>
-                  <p className="mt-1 text-[10px] font-semibold text-[#77776d]">alex.morgan@example.com</p>
+                  <p className="truncate text-xs font-extrabold">{email}</p>
                 </div>
                 <button className="mt-1 w-full rounded-xl px-3 py-2.5 text-left text-xs font-bold text-[#a13922] hover:bg-[#fff0ec]" onClick={onExpire}>Sign out</button>
               </div>
@@ -103,10 +110,6 @@ export default function AppShell({
               </button>
             ))}
           </nav>
-          <button className="rounded-2xl border border-[#171714]/15 bg-white p-4 text-left transition hover:-translate-y-1 hover:shadow-[0_5px_0_#171714]" onClick={onLanding}>
-            <span className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#ff6b4a]">Preview mode</span>
-            <span className="mt-2 block text-xs font-bold">Back to landing page</span>
-          </button>
         </aside>
         <div className="min-w-0 flex-1">{children}</div>
       </div>

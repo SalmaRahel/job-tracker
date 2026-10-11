@@ -1,9 +1,10 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import * as authApi from "../../shared/api/authApi";
-import { clearToken, getToken, setToken, setUnauthorizedHandler } from "../../shared/api/client";
+import { clearToken, getEmail, getToken, setEmail, setToken, setUnauthorizedHandler } from "../../shared/api/client";
 
 type AuthValue = {
   token: string | null;
+  email: string | null;
   isLoggedIn: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
@@ -14,26 +15,34 @@ const AuthContext = createContext<AuthValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setTokenState] = useState<string | null>(getToken);
+  const [email, setEmailState] = useState<string | null>(getEmail);
 
   const logout = () => {
     clearToken();
     setTokenState(null);
+    setEmailState(null);
   };
 
-  const save = ({ access_token }: { access_token: string }) => {
+  const save = (email: string, { access_token }: { access_token: string }) => {
     setToken(access_token);
+    setEmail(email);
     setTokenState(access_token);
+    setEmailState(email);
   };
 
   useEffect(() => {
-    setUnauthorizedHandler(() => setTokenState(null));
+    setUnauthorizedHandler(() => {
+      setTokenState(null);
+      setEmailState(null);
+    });
   }, []);
 
   const value: AuthValue = {
     token,
+    email,
     isLoggedIn: token !== null,
-    login: async (email, password) => save(await authApi.login(email, password)),
-    register: async (email, password) => save(await authApi.register(email, password)),
+    login: async (email, password) => save(email, await authApi.login(email, password)),
+    register: async (email, password) => save(email, await authApi.register(email, password)),
     logout,
   };
 

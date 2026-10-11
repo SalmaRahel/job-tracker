@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import LandingPage from "./features/auth/LandingPage";
 import DashboardPage from "./features/dashboard/DashboardPage";
 import AskPage from "./features/job_search_query/AskPage";
@@ -7,26 +7,27 @@ import JobFormPage from "./features/jobs/JobFormPage";
 import JobsListPage from "./features/jobs/JobsListPage";
 import ProfilePage from "./features/profile/ProfilePage";
 import { useAuth } from "./features/auth/AuthContext";
+import { useJobs } from "./features/jobs/useJobs";
 import AppShell from "./shared/components/AppShell";
-import { jobs as initialJobs, profile as initialProfile, type Job, type Profile } from "./shared/data/mockData";
+import { jobs as mockJobs, profile as initialProfile, type Job, type Profile } from "./shared/data/mockData";
 import type { AppPage } from "./shared/types";
 
 export default function App() {
   const { isLoggedIn, logout } = useAuth();
   const [page, setPage] = useState<AppPage>("dashboard");
-  const [jobs, setJobs] = useState<Job[]>([]);
+  const store = useJobs(isLoggedIn);
   const [profile, setProfile] = useState<Profile | null>(initialProfile);
-  const [selectedId, setSelectedId] = useState<number>(initialJobs[0].id);
-  const [loading, setLoading] = useState(true);
   const [expired, setExpired] = useState(false);
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setJobs(initialJobs);
-      setLoading(false);
-    }, 450);
-    return () => window.clearTimeout(timer);
-  }, []);
+  const attempt = async (action: () => Promise<unknown>) => {
+    try {
+      await action();
+      return true;
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : "Something went wrong");
+      return false;
+    }
+  };
 
   const navigate = (next: AppPage) => {
     setPage(next);
@@ -48,20 +49,22 @@ export default function App() {
     );
   }
 
-  const selectedJob = jobs.find((job) => job.id === selectedId);
-  const saveJob = (job: Job) => {
-    setJobs((current) => current.some((item) => item.id === job.id) ? current.map((item) => item.id === job.id ? job : item) : [job, ...current]);
-    setSelectedId(job.id);
-    navigate("job-detail");
+  const selectedJob = store.selected;
+  const saveJob = async (job: Job) => {
+    if (await attempt(() => store.save(job, page === "job-edit"))) navigate("job-detail");
   };
-  const deleteJob = (id: number) => setJobs((current) => current.filter((job) => job.id !== id));
+  const open = (id: number, next: AppPage) => {
+    store.select(id);
+    navigate(next);
+  };
 
   let content;
-  if (page === "dashboard") content = <DashboardPage jobs={jobs} onAdd={() => navigate("job-create")} />;
-  else if (page === "jobs") content = <JobsListPage jobs={jobs} loading={loading} onAdd={() => navigate("job-create")} onOpen={(id) => { setSelectedId(id); navigate("job-detail"); }} onEdit={(id) => { setSelectedId(id); navigate("job-edit"); }} onDelete={deleteJob} />;
+  if (page === "dashboard") content = <DashboardPage jobs={mockJobs} onAdd={() => navigate("job-create")} />;
+  else if (page === "jobs") content = <JobsListPage jobs={store.jobs} loading={store.loading} error={store.error} hasMore={store.hasMore} onSearch={store.setSearch} onLoadMore={store.loadMore} onAdd={() => navigate("job-create")} onOpen={(id) => open(id, "job-detail")} onEdit={(id) => open(id, "job-edit")} onDelete={(id) => attempt(() => store.remove(id))} />;
   else if (page === "job-create") content = <JobFormPage onCancel={() => navigate("jobs")} onSave={saveJob} />;
+  else if ((page === "job-edit" || page === "job-detail") && store.selecting) content = <JobSkeleton />;
   else if (page === "job-edit" && selectedJob) content = <JobFormPage job={selectedJob} onCancel={() => navigate("job-detail")} onSave={saveJob} />;
-  else if (page === "job-detail" && selectedJob) content = <JobDetailPage job={selectedJob} profile={profile} onBack={() => navigate("jobs")} onEdit={() => navigate("job-edit")} onProfile={() => navigate("profile")} onStatus={(status) => setJobs((current) => current.map((job) => job.id === selectedId ? { ...job, status } : job))} />;
+  else if (page === "job-detail" && selectedJob) content = <JobDetailPage job={selectedJob} profile={profile} onBack={() => navigate("jobs")} onEdit={() => navigate("job-edit")} onProfile={() => navigate("profile")} onStatus={(status) => attempt(() => store.setStatus(selectedJob.id, status))} />;
   else if (page === "ask") content = <AskPage />;
   else if (page === "profile") content = <ProfilePage profile={profile} setProfile={setProfile} />;
   else content = <FriendlyError onBack={() => navigate("jobs")} />;
@@ -70,6 +73,18 @@ export default function App() {
     <AppShell page={page} navigate={navigate} onLanding={() => navigate("landing")} onExpire={() => { logout(); setPage("landing"); }}>
       {content}
     </AppShell>
+  );
+}
+
+function JobSkeleton() {
+  return (
+    <section className="px-5 pt-10 md:px-8 lg:px-10">
+      <div className="mx-auto max-w-[900px] animate-pulse space-y-4">
+        <span className="block h-4 w-32 rounded bg-[#e9e5da]" />
+        <span className="block h-12 w-72 rounded bg-[#e9e5da]" />
+        <span className="block h-64 rounded-[28px] bg-[#e9e5da]" />
+      </div>
+    </section>
   );
 }
 
