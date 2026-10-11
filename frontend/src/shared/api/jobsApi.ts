@@ -1,5 +1,5 @@
 import { apiFetch } from "./client";
-import type { Job, JobStatus } from "../data/mockData";
+import type { Job, JobStatus } from "../types";
 
 type ApiJob = {
   id: number;

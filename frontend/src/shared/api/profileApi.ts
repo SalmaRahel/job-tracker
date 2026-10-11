@@ -1,5 +1,5 @@
 import { ApiError, apiFetch } from "./client";
-import type { Profile, ProfileItem } from "../data/mockData";
+import type { Profile, ProfileItem } from "../types";
 
 export type Section = "experience" | "education" | "projects" | "certifications" | "links";
 export type Skill = { id: number; name: string };

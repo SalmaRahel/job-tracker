@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Icon } from "../../shared/components/AppShell";
 import ConfirmDialog from "../../shared/components/ConfirmDialog";
 import type { Section } from "../../shared/api/profileApi";
-import type { Profile, ProfileItem } from "../../shared/data/mockData";
+import type { Profile, ProfileItem } from "../../shared/types";
 import type { ProfileStore } from "./useProfile";
 import { emailError, isValidPhone } from "../../shared/validation";
 

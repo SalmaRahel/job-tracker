@@ -1,4 +1,5 @@
 import logging
+import os
 from .redis_client import r
 from ..matching.service import run_analysis
 from ..cv_generation.service import run_cv_generation
@@ -10,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 STREAM = "jobs_stream"
 GROUP = "workers"
-CONSUMER = "worker-1"
+CONSUMER = os.getenv("WORKER_NAME", "worker-1")
 
 
 def handle(message_id, fields):

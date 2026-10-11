@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "../../shared/components/AppShell";
 import ConfirmDialog from "../../shared/components/ConfirmDialog";
-import { jobStatuses, type Job, type JobStatus } from "../../shared/data/mockData";
+import { jobStatuses, type Job, type JobStatus } from "../../shared/types";
 
 const statusStyles: Record<JobStatus, string> = {
   Saved: "bg-[#f0eee6] text-[#5d5d55]",

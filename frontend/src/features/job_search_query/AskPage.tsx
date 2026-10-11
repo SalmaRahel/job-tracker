@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Icon } from "../../shared/components/AppShell";
-import { exampleQuestions } from "../../shared/data/mockData";
+import { exampleQuestions } from "../../shared/data/landingContent";
 import { useAsk } from "./useAsk";
 
 export default function AskPage() {

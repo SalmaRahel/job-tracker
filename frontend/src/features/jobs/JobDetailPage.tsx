@@ -1,5 +1,5 @@
 import { Icon } from "../../shared/components/AppShell";
-import { jobStatuses, type Job, type Profile } from "../../shared/data/mockData";
+import { jobStatuses, type Job, type Profile } from "../../shared/types";
 import MatchAnalysisCard from "../matching/MatchAnalysisCard";
 import CvCard from "../cv/CvCard";
 

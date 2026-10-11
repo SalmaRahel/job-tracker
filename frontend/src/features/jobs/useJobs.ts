@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import * as jobsApi from "../../shared/api/jobsApi";
-import type { Job, JobStatus } from "../../shared/data/mockData";
+import type { Job, JobStatus } from "../../shared/types";
 
 const message = (err: unknown) => (err instanceof Error ? err.message : "Something went wrong");
 

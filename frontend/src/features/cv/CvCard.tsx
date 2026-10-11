@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Icon } from "../../shared/components/AppShell";
-import type { Job, Profile } from "../../shared/data/mockData";
+import type { Job, Profile } from "../../shared/types";
 import { useCv } from "./useCv";
 
 export default function CvCard({ job, profile, onProfile }: { job: Job; profile: Profile | null; onProfile: () => void }) {

@@ -6,7 +6,7 @@ import {
   landingFeatures,
   landingJobs,
   pipelineSteps,
-} from "../../shared/data/mockData";
+} from "../../shared/data/landingContent";
 
 type AuthMode = "login" | "register" | null;
 
@@ -180,7 +180,7 @@ function AuthDialog({
   );
 }
 
-export default function LandingPage({ onAuthenticated }: { onAuthenticated: () => void }) {
+export default function LandingPage({ onAuthenticated, sessionExpired = false }: { onAuthenticated: () => void; sessionExpired?: boolean }) {
   const [authMode, setAuthMode] = useState<AuthMode>(null);
   const [questionIndex, setQuestionIndex] = useState(0);
 
@@ -193,6 +193,11 @@ export default function LandingPage({ onAuthenticated }: { onAuthenticated: () =
 
   return (
     <main id="top" className="overflow-hidden bg-[#fffaf0] text-[#171714]">
+      {sessionExpired && (
+        <p className="mx-auto max-w-[1440px] px-5 pt-5 text-sm font-bold text-[#c53f2b] md:px-10 lg:px-16">
+          Your session expired. Please log in again.
+        </p>
+      )}
       <nav className="relative z-30 mx-auto flex max-w-[1440px] items-center justify-between px-5 py-5 md:px-10 lg:px-16">
         <Logo blackDot />
         <div className="hidden items-center gap-8 text-sm font-bold md:flex">

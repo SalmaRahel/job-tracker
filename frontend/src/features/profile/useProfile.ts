@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import * as profileApi from "../../shared/api/profileApi";
 import type { Section, Skill } from "../../shared/api/profileApi";
-import type { Profile, ProfileItem } from "../../shared/data/mockData";
+import type { Profile, ProfileItem } from "../../shared/types";
 
 const CORE: Section[] = ["experience", "education", "projects"];
 const NEED_FIRST = "Add an experience, education or project first to create your profile.";

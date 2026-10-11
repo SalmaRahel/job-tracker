@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Icon } from "../../shared/components/AppShell";
-import { jobStatuses, type Job, type JobStatus } from "../../shared/data/mockData";
+import { jobStatuses, type Job, type JobStatus } from "../../shared/types";
 
 const fieldClass = "mt-2 w-full rounded-2xl border border-[#171714]/15 bg-white px-4 py-3.5 text-sm font-semibold outline-none transition focus:border-[#3559e0] focus:ring-4 focus:ring-[#3559e0]/10";
 

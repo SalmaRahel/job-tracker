@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Icon } from "../../shared/components/AppShell";
-import type { Job, Profile } from "../../shared/data/mockData";
+import type { Job, Profile } from "../../shared/types";
 import { useMatching } from "./useMatching";
 
 export default function MatchAnalysisCard({ job, profile, onProfile }: { job: Job; profile: Profile | null; onProfile: () => void }) {

@@ -1,6 +1,10 @@
 import asyncio
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
+from fastapi.responses import JSONResponse
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+from src.database import get_db
 from fastapi.middleware.cors import CORSMiddleware
 import src.models  # noqa: F401
 from src.config import settings
@@ -40,3 +44,11 @@ app.include_router(jd_analysis_router)
 app.include_router(notifications_router)
 app.include_router(cv_generation_router)
 app.include_router(job_search_router)
+
+@app.get("/health")
+def health(db: Session = Depends(get_db)):
+    try:
+        db.execute(text("SELECT 1"))
+    except Exception:
+        return JSONResponse(status_code=503, content={"status": "unavailable"})
+    return {"status": "ok"}

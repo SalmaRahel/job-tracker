@@ -10,15 +10,14 @@ import { useAuth } from "./features/auth/AuthContext";
 import { useJobs } from "./features/jobs/useJobs";
 import { useProfile } from "./features/profile/useProfile";
 import AppShell from "./shared/components/AppShell";
-import type { Job } from "./shared/data/mockData";
+import type { Job } from "./shared/types";
 import type { AppPage } from "./shared/types";
 
 export default function App() {
-  const { isLoggedIn, email, logout } = useAuth();
+  const { isLoggedIn, sessionExpired, email, logout } = useAuth();
   const [page, setPage] = useState<AppPage>("dashboard");
   const store = useJobs(isLoggedIn);
   const profileStore = useProfile(isLoggedIn, email ?? "");
-  const [expired, setExpired] = useState(false);
 
   const [notice, setNotice] = useState("");
 
@@ -39,20 +38,7 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  if (!isLoggedIn || page === "landing") return <LandingPage onAuthenticated={() => navigate("jobs")} />;
-
-  if (expired) {
-    return (
-      <main className="grid min-h-screen place-items-center bg-[#fffaf0] px-5 text-[#171714]">
-        <section className="w-full max-w-md rounded-[30px] border border-[#171714] bg-white p-8 text-center shadow-[8px_8px_0_#171714]">
-          <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[#f5b8d2] font-display text-2xl font-semibold">!</span>
-          <h1 className="mt-6 font-display text-4xl font-semibold tracking-[-.045em]">Your session expired.</h1>
-          <p className="mt-3 text-sm font-medium leading-6 text-[#707067]">For your security, please return to login and start a new session.</p>
-          <button className="mt-7 w-full rounded-full bg-[#171714] px-6 py-3.5 text-sm font-extrabold text-white" onClick={() => { setExpired(false); setPage("landing"); }}>Return to login</button>
-        </section>
-      </main>
-    );
-  }
+  if (!isLoggedIn || page === "landing") return <LandingPage sessionExpired={sessionExpired} onAuthenticated={() => navigate("jobs")} />;
 
   const selectedJob = store.selected;
   const saveJob = async (job: Job) => {

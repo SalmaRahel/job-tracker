@@ -1,6 +1,8 @@
 const TOKEN_KEY = "token";
 const EMAIL_KEY = "email";
-export const BASE_URL = import.meta.env.VITE_API_URL as string;
+const apiUrl = import.meta.env.VITE_API_URL as string | undefined;
+if (apiUrl === undefined) throw new Error("VITE_API_URL is not set");
+export const BASE_URL = apiUrl;
 
 export class ApiError extends Error {
   status: number;

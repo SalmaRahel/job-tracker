@@ -1,5 +1,5 @@
 import { apiFetch } from "./client";
-import { jobStatuses, type JobStatus } from "../data/mockData";
+import { jobStatuses, type JobStatus } from "../types";
 
 type ApiStats = {
   total: number;

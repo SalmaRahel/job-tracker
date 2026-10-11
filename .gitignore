@@ -2,3 +2,4 @@
 __pycache__/
 venv/
 .claude/
+backend/test_gemini.py
