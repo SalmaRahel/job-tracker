@@ -4,7 +4,7 @@ import ConfirmDialog from "../../shared/components/ConfirmDialog";
 import type { Section } from "../../shared/api/profileApi";
 import type { Profile, ProfileItem } from "../../shared/data/mockData";
 import type { ProfileStore } from "./useProfile";
-import { isValidEmail, isValidPhone } from "../../shared/validation";
+import { emailError, isValidPhone } from "../../shared/validation";
 
 const messageOf = (err: unknown) => (err instanceof Error ? err.message : "Something went wrong");
 
@@ -96,7 +96,8 @@ function PersonalForm({ personal, onCancel, onSave }: { personal: Profile["perso
   const submit = (event: FormEvent) => {
     event.preventDefault();
     const next: Record<string, string> = {};
-    if (!isValidEmail(form.email)) next.email = "Enter a valid email address";
+    const emailProblem = emailError(form.email);
+    if (emailProblem) next.email = emailProblem;
     if (!isValidPhone(form.phone)) next.phone = "Enter a valid phone number";
     setErrors(next);
     if (Object.keys(next).length === 0) onSave({ ...form, email: form.email.trim(), phone: form.phone.trim() });

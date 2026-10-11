@@ -15,7 +15,7 @@ from ..jobs.models import Job
 from ..database import SessionLocal
 from .models import CVGeneration
 from .utils import compute_idempotency_key
-from ..background_jobs.redis_client import r
+from ..background_jobs.notify import publish_notification
 
 s3_client = boto3.client("s3")
 
@@ -124,7 +124,8 @@ def cv_generation(id: int, palette_name: str, db: Session):
     if profile is None or len(profile.skills) < 3:
         return
 
-    key = compute_idempotency_key(id, profile)
+    profile_data = ProfileResponse.model_validate(profile)
+    key = compute_idempotency_key(id, profile_data)
 
     cv_result = db.query(CVGeneration).filter(CVGeneration.key == key).first()
     if cv_result:
@@ -132,33 +133,44 @@ def cv_generation(id: int, palette_name: str, db: Session):
 
     #generating cv content
     try:
-        cv_content = generate_cv_content(profile, job.job_description)
+        cv_content = generate_cv_content(profile_data, job.job_description)
     except ValueError:
         return
 
     #transforming cv_content to html
-    cv_html = render_cv_html(profile, cv_content, palette_name)
+    cv_html = render_cv_html(profile_data, cv_content, palette_name)
 
     #transformting from html to pdf_yte
     pdf_bytes = render_cv_pdf(cv_html)
 
     s3_key = upload_cv_to_s3(pdf_bytes, key)
 
-    new_cv = CVGeneration(key=key, job_id=id, s3_key=s3_key)
-    db.add(new_cv)
+    previous_cv = db.query(CVGeneration).filter(CVGeneration.job_id == id).first()
+    if previous_cv is not None:
+        previous_cv.key = key
+        previous_cv.s3_key = s3_key
+    else:
+        db.add(CVGeneration(key=key, job_id=id, s3_key=s3_key))
     db.commit()
-
-    try:
-        payload = json.dumps({"user_id": job.user_id, "message": f"cv generated for user: {job.user_id}, job_id: {job.id}"})
-        r.publish("notification", payload)
-    except Exception:
-        logger.exception("Failed to publish CV generation notification for job_id=%s", job.id)
 
     return CVDownloadKeyResponse(s3_key=s3_key)
 
 def run_cv_generation(id: int, palette_name: str):
     db = SessionLocal()
+    user_id = None
+    result = None
     try:
-        cv_generation(id, palette_name, db)
+        job = db.query(Job).filter(Job.id == id).first()
+        if job is None:
+            return
+        user_id = job.user_id
+        result = cv_generation(id, palette_name, db)
+    except Exception:
+        logger.exception("CV generation failed for job_id=%s", id)
     finally:
         db.close()
+
+    if result is not None:
+        publish_notification(user_id, f"cv generated for user: {user_id}, job_id: {id}")
+    elif user_id is not None:
+        publish_notification(user_id, f"cv generation failed for user: {user_id}, job_id: {id}")

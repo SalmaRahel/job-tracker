@@ -1,6 +1,7 @@
 import re
 from pydantic import BaseModel, EmailStr, field_validator, model_validator
 from pydantic_core import PydanticCustomError
+from .email_check import check_email
 from typing import Optional
 
 PHONE_PATTERN = re.compile(r"^\+?[0-9\s\-.()]+$")
@@ -66,6 +67,11 @@ class ProfileCreate(BaseModel):
     links_json: list[LinkItem] | None = None
     languages_json: list[str] | None = None
 
+    @field_validator("email", mode="before")
+    @classmethod
+    def check_email_field(cls, value):
+        return check_email(value)
+
     @field_validator("phone")
     @classmethod
     def check_phone(cls, value):
@@ -90,6 +96,12 @@ class ProfileResponse(BaseModel):
     education_json: list[EducationItem] | None = None
     links_json: list[LinkItem] | None = None
     languages_json: list[str] | None = None
+    skills: list[str] = []
+
+    @field_validator("skills", mode="before")
+    @classmethod
+    def skill_names(cls, value):
+        return [getattr(item, "name", item) for item in value or []]
 
     class Config:
         from_attributes = True
@@ -106,6 +118,11 @@ class ProfileUpdate(BaseModel):
     education_json: Optional[list[EducationItem]] = None
     links_json: Optional[list[LinkItem]] = None
     languages_json: Optional[list[str]] = None
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def check_email_field(cls, value):
+        return check_email(value)
 
     @field_validator("phone")
     @classmethod

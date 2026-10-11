@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useAuth } from "./AuthContext";
+import { emailError } from "../../shared/validation";
 import {
   floatingQuestions,
   landingFeatures,
@@ -78,6 +79,8 @@ function AuthDialog({
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
+    const emailProblem = mode === "register" ? emailError(email) : null;
+    if (emailProblem) return setError(emailProblem);
     setLoading(true);
     setError("");
     try {

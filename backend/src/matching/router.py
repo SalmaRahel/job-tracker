@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from ..auth.models import User
 from ..jobs.models import Job
 from ..auth.dependencies import get_current_user
+from .schemas import MatchResultResponse
 
 from ..background_jobs.redis_client import r, check_and_set_cooldown
 
@@ -27,3 +28,14 @@ def jd_analysis(id: int, db: Session=Depends(get_db), user: User=Depends(get_cur
     )
     
     return {"message": "Analysis started"}
+
+
+
+@router.get("/{id}/analysis", response_model=MatchResultResponse)
+def get_analysis(id: int, db: Session=Depends(get_db), user: User=Depends(get_current_user)):
+    job = db.query(Job).filter(Job.id == id, Job.user_id == user.id).first()
+    if job is None:
+        raise HTTPException(status_code = 404, detail = "Job not found")
+    if job.matchresult is None:
+        raise HTTPException(status_code = 404, detail = "Analysis not found")
+    return job.matchresult

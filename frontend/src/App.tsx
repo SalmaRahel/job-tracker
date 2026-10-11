@@ -10,7 +10,7 @@ import { useAuth } from "./features/auth/AuthContext";
 import { useJobs } from "./features/jobs/useJobs";
 import { useProfile } from "./features/profile/useProfile";
 import AppShell from "./shared/components/AppShell";
-import { jobs as mockJobs, type Job } from "./shared/data/mockData";
+import type { Job } from "./shared/data/mockData";
 import type { AppPage } from "./shared/types";
 
 export default function App() {
@@ -64,7 +64,7 @@ export default function App() {
   };
 
   let content;
-  if (page === "dashboard") content = <DashboardPage jobs={mockJobs} onAdd={() => navigate("job-create")} />;
+  if (page === "dashboard") content = <DashboardPage onAdd={() => navigate("job-create")} />;
   else if (page === "jobs") content = <JobsListPage jobs={store.jobs} loading={store.loading} error={store.error} hasMore={store.hasMore} onSearch={store.setSearch} onLoadMore={store.loadMore} onAdd={() => navigate("job-create")} onOpen={(id) => open(id, "job-detail")} onEdit={(id) => open(id, "job-edit")} onDelete={(id) => attempt(() => store.remove(id))} />;
   else if (page === "job-create") content = <JobFormPage onCancel={() => navigate("jobs")} onSave={saveJob} />;
   else if ((page === "job-edit" || page === "job-detail") && store.selecting) content = <JobSkeleton />;

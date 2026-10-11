@@ -13,3 +13,12 @@ class JDExtractionRequest(BaseModel):
 class MatchingOutput(BaseModel):
     score: int = Field(ge=0, le=100)
     missing_requirements: list[str]
+
+
+
+class MatchResultResponse(BaseModel):
+    id: int
+    score: int
+    missing_requirements: list[str]
+
+    model_config = {"from_attributes": True}

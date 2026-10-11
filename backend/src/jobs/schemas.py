@@ -42,6 +42,17 @@ class JobPage(BaseModel):
 
 
 
+class MonthCount(BaseModel):
+    month: str
+    count: int
+
+
+class JobStats(BaseModel):
+    total: int
+    by_status: dict[str, int]
+    monthly: list[MonthCount]
+
+
 class JobUpdate(BaseModel):
     company_name: Optional[str] = Field(default=None, max_length=100)
     position: Optional[str] = Field(default=None, max_length=150)

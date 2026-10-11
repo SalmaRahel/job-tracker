@@ -4,7 +4,8 @@ from ..auth.models import User
 from ..database import get_db                  # Session factory — call SessionLocal() to get a DB session
 from ..auth.dependencies import get_current_user
 from .search import search_filter
-from .schemas import JobCreate, JobResponse, JobUpdate, JobPage
+from .stats import build_stats
+from .schemas import JobCreate, JobResponse, JobStats, JobUpdate, JobPage
 from sqlalchemy.orm import Session
 from typing import Optional
 from datetime import  datetime
@@ -70,6 +71,11 @@ def get_jobs(db: Session=Depends(get_db), user: User=Depends(get_current_user), 
 
     return JobPage(items=page,has_more=has_more, next_cursor=next_cursor)
 
+@router.get("/stats", response_model=JobStats)
+def get_job_stats(db: Session=Depends(get_db), user: User=Depends(get_current_user)):
+    return build_stats(db, user.id)
+
+
 @router.get("/{job_id}", response_model=JobResponse)
 def get_id_job(job_id: int, db: Session = Depends(get_db), user: User=Depends(get_current_user)):
     job = db.query(Job).filter(Job.id == job_id, Job.user_id == user.id).first()
@@ -84,6 +90,9 @@ def update_job(job_id: int, updated_data: JobUpdate, db: Session = Depends(get_d
     if job is None:
         raise HTTPException(status_code = 404, detail = "Job not found")
     updates = updated_data.model_dump(exclude_unset=True)
+    description_changed = "job_description" in updates and updates["job_description"] != job.job_description
+    if description_changed and job.matchresult is not None:
+        db.delete(job.matchresult)
     # model_dump() is the converstion step that turns it into a plain dict specificlly so it can be loopes over
     for field_name, value in updates.items():
         setattr(job, field_name, value)

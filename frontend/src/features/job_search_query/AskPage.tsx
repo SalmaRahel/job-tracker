@@ -1,47 +1,17 @@
 import { useState, type FormEvent } from "react";
-import { askJobSearch } from "../../shared/api/mockApi";
 import { Icon } from "../../shared/components/AppShell";
 import { exampleQuestions } from "../../shared/data/mockData";
-
-type HistoryItem = { question: string; answer: string };
-
-const errors: Record<string, string> = {
-  scope: "I can only answer questions about your own job applications.",
-  unsafe: "I could not turn that into a safe query. Try rephrasing.",
-  timeout: "That question took too long. Try something simpler.",
-  network: "I could not reach the assistant. Please try again.",
-  cooldown: "Please wait a moment before asking another question.",
-};
+import { useAsk } from "./useAsk";
 
 export default function AskPage() {
   const [question, setQuestion] = useState("");
-  const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [answer, setAnswer] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [cooldown, setCooldown] = useState(false);
+  const { answer, error, loading, history, ask } = useAsk();
   const submit = async (event?: FormEvent, selected?: string) => {
     event?.preventDefault();
     const value = (selected ?? question).trim();
     if (!value || loading) return;
-    if (cooldown) return setError(errors.cooldown);
     setQuestion(value);
-    setError("");
-    setAnswer("");
-    setLoading(true);
-    try {
-      const response = await askJobSearch(value);
-      setAnswer(response);
-      setHistory((items) => [{ question: value, answer: response }, ...items].slice(0, 4));
-      setQuestion("");
-      setCooldown(true);
-      window.setTimeout(() => setCooldown(false), 1800);
-    } catch (reason) {
-      const code = reason instanceof Error ? reason.message : "network";
-      setError(errors[code] ?? errors.network);
-    } finally {
-      setLoading(false);
-    }
+    if (await ask(value)) setQuestion("");
   };
   return (
     <section className="px-5 pb-28 pt-10 md:px-8 lg:px-10 lg:pt-14">

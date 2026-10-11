@@ -9,7 +9,7 @@ from ..jobs.models import Job
 from ..profile.models import Profile
 from .models import MatchResult
 from ..database import SessionLocal
-from ..background_jobs.redis_client import r
+from ..background_jobs.notify import publish_notification
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +36,7 @@ def extract_jd(job_description: str) -> JDExtraction:
     Job description:
     {job_description}"""
 
-    raw_response = call_gemini(prompt, max_retries=1, model_name="gemini-3.5-flash-lite")
+    raw_response = call_gemini(prompt, max_retries=1, model_name="gemini-3.5-flash-lite", temperature=0)
     data = json.loads(raw_response)
     try:
         validated = JDExtraction(**data)
@@ -52,6 +52,7 @@ def run_matching(jd_extraction_result: JDExtraction, profile: ProfileResponse):
     - Experience level: 20%
     - Education: 10%
     Certifications and projects are supporting context only — do not give them their own weighted slice.
+    Count a required skill as present when the candidate lists the same skill under a different name or a clear equivalent (for example PostgreSQL counts as SQL).
 
     CANDIDATE PROFILE:
     {profile.model_dump_json()}
@@ -65,7 +66,7 @@ def run_matching(jd_extraction_result: JDExtraction, profile: ProfileResponse):
         "score": <int 0-100>,
         "missing_requirements": [<list of plain strings — missing skills AND experience/education gaps>]
     }}"""
-    raw_response = call_gemini(prompt, max_retries=1, model_name="gemini-3.5-flash-lite")
+    raw_response = call_gemini(prompt, max_retries=1, model_name="gemini-3.5-flash-lite", temperature=0)
     data = json.loads(raw_response)
     try:
         validated = MatchingOutput(**data)
@@ -100,18 +101,26 @@ def analyze_job(job_id: int, db: Session):
     db.add(match_result)
     db.commit()
     db.refresh(match_result)
-    try:
-        payload = json.dumps({"user_id": job.user_id, "message": f"matching score is ready for user: {job.user_id}, job_id: {job.id}"})
-        r.publish("notification", payload)
-    except Exception:
-        logger.exception("Failed to publish match result notification for job_id=%s", job.id)
     return match_result
 
 
 def run_analysis(id: int):
     db = SessionLocal()
+    user_id = None
+    result = None
     try:
-        analyze_job(id, db)
+        job = db.query(Job).filter(Job.id == id).first()
+        if job is None:
+            return
+        user_id = job.user_id
+        result = analyze_job(id, db)
+    except Exception:
+        logger.exception("Analysis failed for job_id=%s", id)
     finally:
-        db.close() 
+        db.close()
+
+    if result is not None:
+        publish_notification(user_id, f"matching score is ready for user: {user_id}, job_id: {id}")
+    elif user_id is not None:
+        publish_notification(user_id, f"matching failed for user: {user_id}, job_id: {id}")
 
