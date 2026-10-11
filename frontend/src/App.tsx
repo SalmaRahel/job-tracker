@@ -19,17 +19,21 @@ export default function App() {
   const [profile, setProfile] = useState<Profile | null>(initialProfile);
   const [expired, setExpired] = useState(false);
 
+  const [notice, setNotice] = useState("");
+
   const attempt = async (action: () => Promise<unknown>) => {
+    setNotice("");
     try {
       await action();
       return true;
     } catch (err) {
-      window.alert(err instanceof Error ? err.message : "Something went wrong");
+      setNotice(err instanceof Error ? err.message : "Something went wrong");
       return false;
     }
   };
 
   const navigate = (next: AppPage) => {
+    setNotice("");
     setPage(next);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -71,6 +75,12 @@ export default function App() {
 
   return (
     <AppShell page={page} navigate={navigate} onLanding={() => navigate("landing")} onExpire={() => { logout(); setPage("landing"); }}>
+      {notice && (
+        <div className="mx-auto flex max-w-[1160px] items-center justify-between gap-4 px-5 pt-5 md:px-8 lg:px-10">
+          <p className="text-sm font-bold text-[#c53f2b]">{notice}</p>
+          <button className="shrink-0 text-xs font-bold text-[#77776d]" onClick={() => setNotice("")}>Dismiss</button>
+        </div>
+      )}
       {content}
     </AppShell>
   );

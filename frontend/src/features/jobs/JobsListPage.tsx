@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "../../shared/components/AppShell";
+import ConfirmDeleteDialog from "./ConfirmDeleteDialog";
 import { jobStatuses, type Job, type JobStatus } from "../../shared/data/mockData";
 
 const statusStyles: Record<JobStatus, string> = {
@@ -39,6 +40,7 @@ export default function JobsListPage({
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<"All" | JobStatus>("All");
   const [menu, setMenu] = useState<number | null>(null);
+  const [pending, setPending] = useState<Job | null>(null);
   const filtered = useMemo(() => jobs.filter((job) => status === "All" || job.status === status), [jobs, status]);
 
   useEffect(() => {
@@ -80,13 +82,14 @@ export default function JobsListPage({
               <p className="hidden text-xs font-bold lg:block">{job.deadlineLabel}</p>
               <div className="relative" onClick={(event) => event.stopPropagation()}>
                 <button aria-label="More actions" className="grid h-9 w-9 place-items-center rounded-full border border-[#171714]/15 hover:bg-[#171714] hover:text-white" onClick={() => setMenu(menu === job.id ? null : job.id)}><Icon name="more" className="h-4 w-4" /></button>
-                {menu === job.id && <div className="absolute right-0 top-11 z-20 w-32 rounded-xl border border-[#171714]/10 bg-white p-1.5 shadow-xl"><button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold hover:bg-[#f5f1e8]" onClick={() => onEdit(job.id)}><Icon name="edit" className="h-4 w-4" />Edit</button><button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold text-[#a13922] hover:bg-[#fff0ec]" onClick={() => { setMenu(null); if (window.confirm(`Delete ${job.position} at ${job.company}?`)) onDelete(job.id); }}><Icon name="trash" className="h-4 w-4" />Delete</button></div>}
+                {menu === job.id && <div className="absolute right-0 top-11 z-20 w-32 rounded-xl border border-[#171714]/10 bg-white p-1.5 shadow-xl"><button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold hover:bg-[#f5f1e8]" onClick={() => onEdit(job.id)}><Icon name="edit" className="h-4 w-4" />Edit</button><button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold text-[#a13922] hover:bg-[#fff0ec]" onClick={() => { setMenu(null); setPending(job); }}><Icon name="trash" className="h-4 w-4" />Delete</button></div>}
               </div>
             </article>
           ))}
         </div>
         {hasMore && !loading && <button className="mx-auto mt-6 block rounded-full bg-[#171714] px-5 py-3 text-sm font-bold text-white" onClick={onLoadMore}>Load more</button>}
       </div>
+      {pending && <ConfirmDeleteDialog job={pending} onCancel={() => setPending(null)} onConfirm={() => { onDelete(pending.id); setPending(null); }} />}
     </section>
   );
 }
