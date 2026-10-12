@@ -9,6 +9,7 @@ from jinja2 import Environment, FileSystemLoader
 import os
 from weasyprint import HTML
 import boto3
+from botocore.config import Config
 from src.config import settings
 from sqlalchemy.orm import Session
 from ..jobs.models import Job
@@ -17,7 +18,11 @@ from .models import CVGeneration
 from .utils import compute_idempotency_key
 from ..background_jobs.notify import publish_notification
 
-s3_client = boto3.client("s3")
+s3_client = boto3.client(
+    "s3",
+    region_name=os.environ.get("AWS_DEFAULT_REGION", "eu-north-1"),
+    config=Config(signature_version="s3v4"),
+)
 
 logger = logging.getLogger(__name__)
 
