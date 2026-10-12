@@ -21,7 +21,7 @@ from ..background_jobs.notify import publish_notification
 s3_client = boto3.client(
     "s3",
     region_name=os.environ.get("AWS_DEFAULT_REGION", "eu-north-1"),
-    config=Config(signature_version="s3v4"),
+    config=Config(signature_version="s3v4", s3={"addressing_style": "virtual"}),
 )
 
 logger = logging.getLogger(__name__)

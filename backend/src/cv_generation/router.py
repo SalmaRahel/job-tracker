@@ -15,7 +15,7 @@ from ..background_jobs.redis_client import r, check_and_set_cooldown
 s3_client = boto3.client(
     "s3",
     region_name=os.environ.get("AWS_DEFAULT_REGION", "eu-north-1"),
-    config=Config(signature_version="s3v4"),
+    config=Config(signature_version="s3v4", s3={"addressing_style": "virtual"}),
 )
 
 router = APIRouter(prefix="/jobs", tags=["cv_generation"])
