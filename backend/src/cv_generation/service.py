@@ -1,7 +1,7 @@
 import json
 import logging
 from ..gemini import call_gemini
-from .schemas import CVContent, CVDownloadKeyResponse
+from .schemas import CVContent, CVDownloadKeyResponse, CVPalette, CVTemplate
 from ..profile.schemas import ProfileResponse
 from ..profile.models import Profile
 from pydantic import ValidationError
@@ -76,15 +76,15 @@ JOB DESCRIPTION:
     return validated
 
 
-def render_cv_html(profile: ProfileResponse, cv_content: CVContent, palette_name: str):
+def render_cv_html(profile: ProfileResponse, cv_content: CVContent, template: CVTemplate, palette: CVPalette):
     context_dict = {
         "full_name": profile.full_name,
         "email": profile.email,
         "phone": profile.phone,
         "city": profile.city,
-        "links": profile.links_json,
+        "links": profile.links_json or [],
         "skills": profile.skills,
-        "languages": profile.languages_json,
+        "languages": profile.languages_json or [],
         "summary": cv_content.summary,
         "experience": cv_content.experience,
         "education": cv_content.education,
@@ -92,18 +92,16 @@ def render_cv_html(profile: ProfileResponse, cv_content: CVContent, palette_name
         "certifications": cv_content.certifications
     }
     env = Environment(loader=FileSystemLoader(TEMPLATES_DIR))
-    if palette_name is None:
-      template = env.get_template("plain_template.html")
+    if template == CVTemplate.PLAIN:
+        jinja_template = env.get_template("plain_template.html")
     else:
-      template = env.get_template("colored_template.html")
-      palette_path = os.path.join(TEMPLATES_DIR, "palette.json")
-      with open(palette_path) as f:
-         palettes = json.load(f)
-         selected_palette = palettes[palette_name]
-         context_dict.update(selected_palette)
+        jinja_template = env.get_template("colored_template.html")
+        with open(os.path.join(TEMPLATES_DIR, "palette.json")) as f:
+            palettes = json.load(f)
+        values = palettes[palette.value]
+        context_dict["palette_vars"] = {k: v for k, v in values.items() if not k.startswith("_")}
 
-    html = template.render(context_dict)
-    return html
+    return jinja_template.render(context_dict)
 
 
 def render_cv_pdf(html_string: str) -> bytes:
@@ -120,7 +118,7 @@ def upload_cv_to_s3(pdf_bytes: bytes, key: str) -> str:
     )
   return key
 
-def cv_generation(id: int, palette_name: str, db: Session):
+def cv_generation(id: int, template: CVTemplate, palette: CVPalette, db: Session):
     job = db.query(Job).filter(Job.id == id).first()
     if job is None:
         return
@@ -130,7 +128,7 @@ def cv_generation(id: int, palette_name: str, db: Session):
         return
 
     profile_data = ProfileResponse.model_validate(profile)
-    key = compute_idempotency_key(id, profile_data)
+    key = compute_idempotency_key(id, profile_data, template, palette)
 
     cv_result = db.query(CVGeneration).filter(CVGeneration.key == key).first()
     if cv_result:
@@ -143,7 +141,7 @@ def cv_generation(id: int, palette_name: str, db: Session):
         return
 
     #transforming cv_content to html
-    cv_html = render_cv_html(profile_data, cv_content, palette_name)
+    cv_html = render_cv_html(profile_data, cv_content, template, palette)
 
     #transformting from html to pdf_yte
     pdf_bytes = render_cv_pdf(cv_html)
@@ -160,7 +158,7 @@ def cv_generation(id: int, palette_name: str, db: Session):
 
     return CVDownloadKeyResponse(s3_key=s3_key)
 
-def run_cv_generation(id: int, palette_name: str):
+def run_cv_generation(id: int, template: CVTemplate, palette: CVPalette):
     db = SessionLocal()
     user_id = None
     result = None
@@ -169,7 +167,7 @@ def run_cv_generation(id: int, palette_name: str):
         if job is None:
             return
         user_id = job.user_id
-        result = cv_generation(id, palette_name, db)
+        result = cv_generation(id, template, palette, db)
     except Exception:
         logger.exception("CV generation failed for job_id=%s", id)
     finally:

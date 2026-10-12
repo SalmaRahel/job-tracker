@@ -5,7 +5,7 @@ from ..auth.models import User
 from ..jobs.models import Job
 from ..auth.dependencies import get_current_user
 from .models import CVGeneration
-from .schemas import CVDownloadUrlResponse
+from .schemas import CVDownloadUrlResponse, GenerateCVRequest
 import os
 import boto3
 from botocore.config import Config
@@ -21,7 +21,8 @@ s3_client = boto3.client(
 router = APIRouter(prefix="/jobs", tags=["cv_generation"])
 
 @router.post("/{id}/generate-cv", status_code=202)
-def generate_cv(id: int, palette_name: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+def generate_cv(id: int, body: GenerateCVRequest | None = None, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    style = body or GenerateCVRequest()
     job = db.query(Job).filter(Job.id == id, Job.user_id == user.id).first()
     if job is None:
         raise HTTPException(status_code=404, detail="Job not found")
@@ -34,7 +35,8 @@ def generate_cv(id: int, palette_name: str, db: Session = Depends(get_db), user:
         fields={
             "job_type": "cv_generation",
             "job_id": str(id),
-            "palette_name": palette_name,
+            "template": style.template.value,
+            "palette": style.palette.value,
         }   
     )
 

@@ -1,4 +1,24 @@
-from pydantic import BaseModel, Field
+from enum import Enum
+
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class CVTemplate(str, Enum):
+    PLAIN = "plain"
+    COLORED = "colored"
+
+
+class CVPalette(str, Enum):
+    DARK_GRAY_BLUE = "dark_gray_blue"
+    FROSTED_MINT = "frosted_mint"
+    LIGHT_GRAY = "light_gray"
+
+
+class GenerateCVRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    template: CVTemplate = CVTemplate.COLORED
+    palette: CVPalette = CVPalette.DARK_GRAY_BLUE
 
 
 class CVExperienceEntry(BaseModel):
