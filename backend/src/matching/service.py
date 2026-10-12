@@ -1,5 +1,6 @@
 import json
 import logging
+import time
 from ..gemini import call_gemini
 from .schemas import JDExtraction, MatchingOutput
 from ..profile.schemas import ProfileResponse
@@ -8,6 +9,7 @@ from sqlalchemy.orm import Session
 from ..jobs.models import Job
 from ..profile.models import Profile
 from .models import MatchResult
+from .cache import cache_key, read_cached, store_cached
 from ..database import SessionLocal
 from ..background_jobs.notify import publish_notification
 
@@ -36,7 +38,7 @@ def extract_jd(job_description: str) -> JDExtraction:
     Job description:
     {job_description}"""
 
-    raw_response = call_gemini(prompt, max_retries=1, model_name="gemini-3.5-flash-lite", temperature=0)
+    raw_response = call_gemini(prompt, max_retries=1, model_name="gemini-3.5-flash-lite", temperature=0, thinking_level="MINIMAL")
     data = json.loads(raw_response)
     try:
         validated = JDExtraction(**data)
@@ -66,7 +68,7 @@ def run_matching(jd_extraction_result: JDExtraction, profile: ProfileResponse):
         "score": <int 0-100>,
         "missing_requirements": [<list of plain strings — missing skills AND experience/education gaps>]
     }}"""
-    raw_response = call_gemini(prompt, max_retries=1, model_name="gemini-3.5-flash-lite", temperature=0)
+    raw_response = call_gemini(prompt, max_retries=1, model_name="gemini-3.5-flash-lite", temperature=0, thinking_level="MINIMAL")
     data = json.loads(raw_response)
     try:
         validated = MatchingOutput(**data)
@@ -76,18 +78,36 @@ def run_matching(jd_extraction_result: JDExtraction, profile: ProfileResponse):
 
 
 def analyze_job(job_id: int, db: Session):
+    started = time.perf_counter()
     job = db.query(Job).filter(Job.id == job_id).first()
     if job.job_description is None:
         return
-    
+
     profile = db.query(Profile).filter(Profile.user_id == job.user_id).first()
     if profile is None or len(profile.skills) < 3:
         return
-
-    jd_extracted = extract_jd(job.job_description)
     profile_data = ProfileResponse.model_validate(profile)
-    matching_output = run_matching(jd_extracted, profile_data)
+    db_seconds = time.perf_counter() - started
 
+    key = cache_key(job.job_description, profile_data)
+    matching_output = read_cached(key)
+    extract_seconds = 0.0
+    matching_seconds = 0.0
+    cache_hit = matching_output is not None
+
+    if cache_hit:
+        logger.info("analysis cache hit job_id=%s", job_id)
+    else:
+        logger.info("analysis cache miss job_id=%s", job_id)
+        step = time.perf_counter()
+        jd_extracted = extract_jd(job.job_description)
+        extract_seconds = time.perf_counter() - step
+
+        step = time.perf_counter()
+        matching_output = run_matching(jd_extracted, profile_data)
+        matching_seconds = time.perf_counter() - step
+
+    step = time.perf_counter()
     match_result = MatchResult(
         job_id=job.id,
         score=matching_output.score,
@@ -101,6 +121,15 @@ def analyze_job(job_id: int, db: Session):
     db.add(match_result)
     db.commit()
     db.refresh(match_result)
+    db_seconds += time.perf_counter() - step
+
+    if not cache_hit:
+        store_cached(key, matching_output)
+
+    logger.info(
+        "analysis timing job_id=%s cache=%s extract=%.2fs matching=%.2fs db=%.2fs total=%.2fs",
+        job_id, "hit" if cache_hit else "miss", extract_seconds, matching_seconds, db_seconds, time.perf_counter() - started,
+    )
     return match_result
 
 

@@ -7,6 +7,9 @@ import redis
 
 import src.models  # noqa: F401
 
+logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(name)s %(message)s")
+logging.getLogger("src").setLevel(logging.INFO)
+
 logger = logging.getLogger(__name__)
 
 STREAM = "jobs_stream"

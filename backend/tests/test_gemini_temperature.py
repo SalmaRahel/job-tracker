@@ -77,3 +77,65 @@ def test_cv_generation_keeps_default_temperature(captured):
     captured.reply = {"summary": "Hello"}
     cv_service.generate_cv_content(profile(), "Python dev")
     assert "temperature" not in captured.calls[0]
+
+
+def test_wrapper_sends_thinking_level_with_temperature(models):
+    gemini.call_gemini("hi", max_retries=1, model_name="m", temperature=0, thinking_level="MINIMAL")
+    config = models.calls[0]["config"]
+    assert config.temperature == 0
+    assert config.thinking_config.thinking_level.value == "MINIMAL"
+
+
+def test_wrapper_sends_no_thinking_config_by_default(models):
+    gemini.call_gemini("hi", max_retries=1, model_name="m", temperature=0)
+    assert models.calls[0]["config"].thinking_config is None
+
+
+def test_wrapper_retry_is_counted(monkeypatch):
+    import logging
+
+    from google.genai import errors
+
+    class FlakyModels:
+        calls = 0
+
+        def generate_content(self, **kwargs):
+            FlakyModels.calls += 1
+            if FlakyModels.calls == 1:
+                raise errors.APIError(500, {"error": {"message": "boom"}})
+            return type("Reply", (), {"text": "ok"})()
+
+    monkeypatch.setattr(gemini, "client", type("FakeClient", (), {"models": FlakyModels()})())
+    monkeypatch.setattr(gemini.time, "sleep", lambda seconds: None)
+    records = []
+
+    class Collect(logging.Handler):
+        def emit(self, record):
+            records.append(record.getMessage())
+
+    handler = Collect(level=logging.INFO)
+    previous_level = gemini.logger.level
+    gemini.logger.disabled = False
+    gemini.logger.addHandler(handler)
+    gemini.logger.setLevel(logging.INFO)
+    try:
+        assert gemini.call_gemini("hi", max_retries=2, model_name="m") == "ok"
+    finally:
+        gemini.logger.removeHandler(handler)
+        gemini.logger.setLevel(previous_level)
+    assert any("retried=True" in message for message in records)
+
+
+def test_jd_extraction_and_matching_use_minimal_thinking(captured):
+    captured.reply = {"required_skills": [], "nice_to_have_skills": [], "experience_level": "entry"}
+    matching_service.extract_jd("Python dev")
+    captured.reply = {"score": 70, "missing_requirements": []}
+    jd = JDExtraction(required_skills=["SQL"], nice_to_have_skills=[], experience_level="entry")
+    matching_service.run_matching(jd, profile())
+    assert [c["thinking_level"] for c in captured.calls] == ["MINIMAL", "MINIMAL"]
+
+
+def test_cv_generation_has_no_thinking_level(captured):
+    captured.reply = {"summary": "Hello"}
+    cv_service.generate_cv_content(profile(), "Python dev")
+    assert "thinking_level" not in captured.calls[0]
