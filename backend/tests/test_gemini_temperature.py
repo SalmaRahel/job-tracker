@@ -139,3 +139,84 @@ def test_cv_generation_has_no_thinking_level(captured):
     captured.reply = {"summary": "Hello"}
     cv_service.generate_cv_content(profile(), "Python dev")
     assert "thinking_level" not in captured.calls[0]
+
+
+class ScriptedModels:
+    def __init__(self, outcomes):
+        self.outcomes = list(outcomes)
+        self.calls = []
+
+    def generate_content(self, **kwargs):
+        self.calls.append(kwargs)
+        outcome = self.outcomes.pop(0)
+        if isinstance(outcome, Exception):
+            raise outcome
+        return type("Reply", (), {"text": outcome})()
+
+
+def scripted(monkeypatch, outcomes):
+    from google.genai import errors
+
+    fake = ScriptedModels(outcomes)
+    monkeypatch.setattr(gemini, "client", type("FakeClient", (), {"models": fake})())
+    monkeypatch.setattr(gemini.time, "sleep", lambda s: None)
+    return fake
+
+
+def server_error(code=503):
+    from google.genai import errors
+
+    return errors.ServerError(code, {"error": {"code": code, "message": "busy", "status": "UNAVAILABLE"}})
+
+
+def client_error(code):
+    from google.genai import errors
+
+    return errors.ClientError(code, {"error": {"code": code, "message": "x", "status": "X"}})
+
+
+def test_503_falls_back_to_flash_lite(monkeypatch, caplog):
+    fake = scripted(monkeypatch, [server_error(503), "from-lite"])
+    with caplog.at_level("WARNING"):
+        result = gemini.call_gemini("p", max_retries=1, model_name="gemini-3.5-flash", temperature=0, thinking_level="minimal")
+    assert result == "from-lite"
+    assert [c["model"] for c in fake.calls] == ["gemini-3.5-flash", gemini.FALLBACK_MODEL]
+    assert fake.calls[1]["contents"] == "p"
+    assert fake.calls[1]["config"].temperature == 0
+    assert fake.calls[1]["config"].thinking_config.thinking_level.value.lower() == "minimal"
+    assert any("gemini-3.5-flash" in r.message and "503" in r.message for r in caplog.records)
+
+
+def test_429_falls_back_to_flash_lite(monkeypatch):
+    fake = scripted(monkeypatch, [client_error(429), "from-lite"])
+    assert gemini.call_gemini("p", max_retries=1, model_name="gemini-3.5-flash") == "from-lite"
+    assert len(fake.calls) == 2
+
+
+def test_fallback_does_not_use_up_retries(monkeypatch):
+    fake = scripted(monkeypatch, [server_error(), server_error(), "from-lite"])
+    assert gemini.call_gemini("p", max_retries=2, model_name="gemini-3.5-flash") == "from-lite"
+    assert [c["model"] for c in fake.calls] == ["gemini-3.5-flash", "gemini-3.5-flash", gemini.FALLBACK_MODEL]
+
+
+def test_both_models_failing_raises_the_original_error(monkeypatch):
+    original = server_error(503)
+    fake = scripted(monkeypatch, [original, client_error(400)])
+    with pytest.raises(Exception) as raised:
+        gemini.call_gemini("p", max_retries=1, model_name="gemini-3.5-flash")
+    assert raised.value is original
+    assert len(fake.calls) == 2
+
+
+def test_400_does_not_fall_back(monkeypatch):
+    fake = scripted(monkeypatch, [client_error(400)])
+    with pytest.raises(Exception):
+        gemini.call_gemini("p", max_retries=1, model_name="gemini-3.5-flash")
+    assert len(fake.calls) == 1
+
+
+def test_call_already_on_flash_lite_does_not_loop(monkeypatch):
+    fake = scripted(monkeypatch, [server_error()])
+    with pytest.raises(Exception):
+        gemini.call_gemini("p", max_retries=1, model_name=gemini.FALLBACK_MODEL)
+    assert len(fake.calls) == 1
