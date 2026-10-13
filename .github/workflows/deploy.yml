@@ -1,0 +1,75 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  test:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    env:
+      EC2_HOST: ${{ secrets.EC2_HOST }}
+      EC2_USER: ${{ secrets.EC2_USER }}
+      EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+      SSH_KEY_FILE: ${{ runner.temp }}/deploy_key
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create archive
+        run: git archive --format=tar.gz -o deploy.tar.gz HEAD
+
+      - name: Write SSH key
+        run: |
+          set -e
+          umask 077
+          printf '%s\n' "$EC2_SSH_KEY" > "$SSH_KEY_FILE"
+          chmod 600 "$SSH_KEY_FILE"
+
+      - name: Upload archive
+        run: |
+          set -e
+          scp -i "$SSH_KEY_FILE" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new deploy.tar.gz "$EC2_USER@$EC2_HOST:/opt/job-tracker/"
+
+      - name: Deploy on server
+        run: |
+          set -e
+          ssh -i "$SSH_KEY_FILE" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new "$EC2_USER@$EC2_HOST" 'bash -s' <<'REMOTE'
+          set -e
+          cd /opt/job-tracker
+          tar xzf deploy.tar.gz
+          rm deploy.tar.gz
+          docker compose -f docker-compose.prod.yml up -d --build api worker web
+          docker compose -f docker-compose.prod.yml restart web
+          docker image prune -f
+          docker compose -f docker-compose.prod.yml ps
+          REMOTE
+
+      - name: Health check
+        run: |
+          for i in $(seq 1 18); do
+            body=$(curl -fsS --max-time 5 "http://$EC2_HOST/api/health" 2>/dev/null | tr -d ' \r\n' || true)
+            if [ "$body" = '{"status":"ok"}' ]; then
+              echo "healthy"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "health check failed"
+          ssh -i "$SSH_KEY_FILE" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=accept-new "$EC2_USER@$EC2_HOST" 'cd /opt/job-tracker && docker compose -f docker-compose.prod.yml logs --tail=40 api' || true
+          exit 1
+
+      - name: Remove SSH key
+        if: always()
+        run: rm -f "$SSH_KEY_FILE"
