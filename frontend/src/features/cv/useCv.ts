@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { getCvUrl, startCv } from "../../shared/api/cvApi";
+import { getCvUrl, startCv, type CvStyle } from "../../shared/api/cvApi";
 import { useJobTask } from "../notifications/useJobTask";
 
 export function useCv(jobId: number) {
   const [openError, setOpenError] = useState("");
+  const [style, setStyle] = useState<CvStyle>({ template: "colored", palette: "dark_gray_blue" });
   const task = useJobTask<string>({
     jobId,
     kind: "cv",
-    start: () => startCv(jobId),
+    start: () => startCv(jobId, style),
     fetchResult: () => getCvUrl(jobId),
   });
 
@@ -33,6 +34,8 @@ export function useCv(jobId: number) {
     error: task.error || openError,
     waiting: task.waiting,
     generate: task.run,
+    style,
+    setStyle,
     open,
   };
 }

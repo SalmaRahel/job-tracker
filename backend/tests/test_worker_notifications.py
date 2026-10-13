@@ -1,6 +1,8 @@
 import pytest
 from sqlalchemy import text
 
+from src.cv_generation.schemas import CVPalette, CVTemplate
+
 
 @pytest.fixture()
 def job(db):
@@ -61,7 +63,7 @@ def test_cv_success_is_published(job, published, monkeypatch):
 
     job_id, user_id = job
     monkeypatch.setattr(service, "cv_generation", lambda *a: object())
-    service.run_cv_generation(job_id, None)
+    service.run_cv_generation(job_id, CVTemplate.PLAIN, CVPalette.DARK_GRAY_BLUE)
     assert published == [(user_id, f"cv generated for user: {user_id}, job_id: {job_id}")]
 
 
@@ -71,7 +73,7 @@ def test_cv_failure_is_published(job, published, monkeypatch, outcome):
 
     job_id, user_id = job
     monkeypatch.setattr(service, "cv_generation", outcome)
-    service.run_cv_generation(job_id, None)
+    service.run_cv_generation(job_id, CVTemplate.PLAIN, CVPalette.DARK_GRAY_BLUE)
     assert published == [(user_id, f"cv generation failed for user: {user_id}, job_id: {job_id}")]
 
 
@@ -92,13 +94,13 @@ def test_cv_regeneration_after_profile_change_replaces_the_row(job, db, monkeypa
     monkeypatch.setattr(service, "render_cv_pdf", lambda html: b"%PDF")
     monkeypatch.setattr(service, "upload_cv_to_s3", lambda pdf, key: key)
 
-    first = service.cv_generation(job_id, None, db)
-    again = service.cv_generation(job_id, None, db)
+    first = service.cv_generation(job_id, CVTemplate.PLAIN, CVPalette.DARK_GRAY_BLUE, db)
+    again = service.cv_generation(job_id, CVTemplate.PLAIN, CVPalette.DARK_GRAY_BLUE, db)
     assert first is not None and again.s3_key == first.s3_key
 
     profile.city = "Rabat"
     db.commit()
-    second = service.cv_generation(job_id, None, db)
+    second = service.cv_generation(job_id, CVTemplate.PLAIN, CVPalette.DARK_GRAY_BLUE, db)
     assert second is not None and second.s3_key != first.s3_key
 
     rows = db.execute(text("SELECT key FROM cv_generations WHERE job_id = :j"), {"j": job_id}).all()

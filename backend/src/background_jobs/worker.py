@@ -2,6 +2,7 @@ import logging
 import os
 from .redis_client import r
 from ..matching.service import run_analysis
+from ..cv_generation.schemas import CVPalette, CVTemplate
 from ..cv_generation.service import run_cv_generation
 import redis
 
@@ -26,8 +27,9 @@ def handle(message_id, fields):
         if job_type == "matching":
             run_analysis(job_id)
         elif job_type == "cv_generation":
-            palette_name = fields.get("palette_name") or None
-            run_cv_generation(job_id, palette_name)
+            template = CVTemplate(fields.get("template") or CVTemplate.COLORED.value)
+            palette = CVPalette(fields.get("palette") or CVPalette.DARK_GRAY_BLUE.value)
+            run_cv_generation(job_id, template, palette)
     except Exception:
         logger.exception("Failed to process %s message_id=%s job_id=%s", job_type, message_id, job_id)
     r.xack(STREAM, GROUP, message_id)

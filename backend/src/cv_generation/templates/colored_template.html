@@ -12,7 +12,7 @@
 
   @page { size: A4; margin: 0; }
   * { box-sizing: border-box; }
-  :root { --accent: {{ accent }}; --accent-light: {{ accent_light }}; --heading-color: {{ heading_color }}; --sidebar-text: {{ sidebar_text }}; --sidebar-text-dim: {{ sidebar_text_dim }}; --sidebar-text-faint: {{ sidebar_text_faint }}; --sidebar-border: {{ sidebar_border }}; --pill-bg: {{ pill_bg }}; --pill-border: {{ pill_border }}; }
+  :root { {% for name, value in palette_vars.items() %}--{{ name }}: {{ value }}; {% endfor %}}
   body { margin: 0; font-family: 'Poppins', sans-serif; font-size: 10pt; color: #2b2b2b; }
 
   .page { display: flex; width: 100%; min-height: 29.7cm; }

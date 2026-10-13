@@ -8,3 +8,5 @@ backend/test_gemini.py
 backend/.env.prod
 *.tfstate
 *.tfstate.*
+.terraform/
+terraform.tfvars
