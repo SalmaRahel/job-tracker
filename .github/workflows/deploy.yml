@@ -23,7 +23,6 @@ jobs:
       EC2_HOST: ${{ secrets.EC2_HOST }}
       EC2_USER: ${{ secrets.EC2_USER }}
       EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
-      SSH_KEY_FILE: ${{ runner.temp }}/deploy_key
     steps:
       - uses: actions/checkout@v4
 
@@ -33,6 +32,8 @@ jobs:
       - name: Write SSH key
         run: |
           set -e
+          SSH_KEY_FILE="$RUNNER_TEMP/deploy_key"
+          echo "SSH_KEY_FILE=$SSH_KEY_FILE" >> "$GITHUB_ENV"
           umask 077
           printf '%s\n' "$EC2_SSH_KEY" > "$SSH_KEY_FILE"
           chmod 600 "$SSH_KEY_FILE"
