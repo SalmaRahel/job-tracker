@@ -2,11 +2,11 @@
 
 **An AI-powered job application tracker.** It scores how well you match a job, writes a tailored CV as a PDF, and answers questions about your applications in plain English.
 
-> **Demo video:** LinkedIn: [Salma Rahel](https://www.linkedin.com/in/salma-r-7b0716290)
-
 > **About the demo data:** every name, company, email and job in the screenshots and the video is **fake demo data**, made only for this showcase.
 
 ![Dashboard](docs/screenshots/dashboard.png)
+
+**Demo video:** LinkedIn: [Salma Rahel](https://www.linkedin.com/in/salma-r-7b0716290)
 
 ---
 
@@ -22,6 +22,16 @@
 
 ## Screenshots
 
+**Landing page.** The entry point of the app.
+
+![Landing page](docs/screenshots/landing.png)
+
+**Login and register.** Create an account or sign in.
+
+![Login](docs/screenshots/login.png)
+
+![Register](docs/screenshots/register.png)
+
 **Jobs board.** Search, filter by status, and see deadlines at a glance.
 
 ![Jobs](docs/screenshots/jobs.png)
@@ -29,6 +39,14 @@
 **Profile.** The single source of facts for the match and the CV. AI features unlock after 3 skills.
 
 ![Profile](docs/screenshots/profile.png)
+
+**Certifications and links.**
+
+![Certifications and links](docs/screenshots/certifications-links.png)
+
+**Projects.** Each project keeps its technologies and a description.
+
+![Projects](docs/screenshots/projects.png)
 
 **AI match analysis and tailored CV.** Score, label and missing requirements on the left. Template and palette choice on the right.
 
