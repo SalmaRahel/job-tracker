@@ -2,7 +2,7 @@
 
 **An AI-powered job application tracker.** It scores how well you match a job, writes a tailored CV as a PDF, and answers questions about your applications in plain English.
 
-> **Demo video:** [ADD YOUR LINKEDIN OR YOUTUBE LINK HERE]
+> **Demo video:** LinkedIn: [Salma Rahel](https://www.linkedin.com/in/salma-r-7b0716290)
 
 > **About the demo data:** every name, company, email and job in the screenshots and the video is **fake demo data**, made only for this showcase.
 
@@ -162,5 +162,6 @@ Database migrations run automatically on start. See [DEPLOY.md](DEPLOY.md) for l
 
 **Salma Rahel**, Software Engineering student at ENSA Tétouan (Morocco).
 GitHub: [SalmaRahel](https://github.com/SalmaRahel)
+LinkedIn: [Salma Rahel](https://www.linkedin.com/in/salma-r-7b0716290)
 
 Feedback is welcome. What would you improve?
